@@ -22,6 +22,10 @@ library(stats)
 library(kableExtra)
 library(flextable)
 library(reshape2)
+
+# Colleen added this one
+library(cowplot)
+
 ```
 
 # Effect of herbivore exclussion and nutrient addition on algae cover.
@@ -129,7 +133,7 @@ Figure 2: Effect of herbivore exclussion and nutrient addition on algae cover du
 Data uploading and preparation including changing names and reordering factors.
 ```{r}
 #Loading data
-AlgaeWeight_Cold2019<-read.csv(file="AlgaeWeight_Cold2020.csv")
+AlgaeWeight_Cold2019<-read.csv(file="AlgaeWeight_Cold2019.csv")
 AlgaeWeight_Warm2020<-read.csv(file="AlgaeWeight_Warm2020.csv")
 
 #Reordering and renaming Factor: Nutrient
@@ -311,7 +315,7 @@ qqline(log(AlgaeWeight_Cold2019$Sample.weight.postburn..g.+0.001))
 
 shapiro.test(AlgaeWeight_Cold2019$Sample.weight.postburn..g.)
 shapiro.test(sqrt(AlgaeWeight_Cold2019$Sample.weight.postburn..g.))
-#still not normal
+n#still not normal
 #It is severe skewed so we can do a log10 transformation
 hist(log10(AlgaeWeight_Warm2020$Sample.weight.postburn..g.))
 shapiro.test(AlgaeWeight_Warm2020$Sample.weight.postburn..g)
@@ -411,4 +415,103 @@ library(boot)
 myBootstrap<-boot(AlgaeWeight_Cold2019, foo, R=1000, strata=AlgaeWeight_Cold2019$Treatment)
 ```
 
+
+## Colleen's suggested bootstrapping method:
+
+```{r bootstrap setup}
+
+### Setup the bootstrap function and number of iterations
+
+# This is a bootstrap function that will sample WITH replacement (explained step by step within the function)
+bootFUN <- function(model, newdata) {
+  nr <- nrow(model$data) # count number of rows in the model (# of observations)
+  data <- model$data # pull data from model
+  data <- data[sample(1:nr, size = nr, replace = TRUE), ] # random sample of numbers from 1 - nr (# of rows) to select data from
+  update <- update(model, data = data) # rerun the model using the 'new' dataset from the random smapling above
+  predict(update, newdata = newdata, type = "response") # predicts response variable with model and updated data 
+}
+
+bootnum <- 1500 # this is the number of bootstrap replicates. I set it to 1500 here but we should select a number between 999 and 9999
+
+```
+
+### Warm Season
+```{r warm season bootstraping}
+
+## Warm season GLM (I removed the +0.01 since you do not have any 0s here)
+warm_glm <- glm(Sample.weight.postburn..g. ~ Treatment * N, family = Gamma(link = "log"), data = AlgaeWeight_Warm2020)
+
+## Run parametric bootstrapping:
+newdata <- data.frame(Treatment = AlgaeWeight_Warm2020$Treatment, N = AlgaeWeight_Warm2020$N) # creates dataframe of predictor variables (here, Treatment and N)
+boot <- replicate(bootnum, bootFUN(model = warm_glm, newdata = newdata)) # run the bootFUN the number (bootnum) of times specified and save as matrix
+
+# Calculate the mean, 95% lowerCI, and 95% upperCI from the boot matrix and add it to dataframe (but as a new name)
+AlgaeWeight_Warm2020_boot <- cbind(AlgaeWeight_Warm2020, as.data.frame(t(apply(boot, 1, function(x) c(mean(x), quantile(x, c(0.025, 0.975)))))))
+colnames(AlgaeWeight_Warm2020_boot)[12:14] <- c("mean", "lowerci", "upperci") # rename mean/CI columns
+
+```
+
+```{r warm season boot plot}
+
+### Plot the observational values and bootstrapped mean/CI
+warm_boot_plot <- ggplot() +
+  theme_bw() + # sets plot theme (removes gridlines, etc.)
+  theme(panel.grid.major=element_blank(), panel.grid.minor=element_blank(), strip.text.x = element_blank(), panel.background=element_blank(), axis.line=element_line(color="black"), legend.key=element_blank(), strip.background = element_blank(), legend.position="none", panel.border = element_rect(colour = "black", size= 0.8))+
+  geom_point(data = AlgaeWeight_Warm2020_boot, aes(x = N , y = Sample.weight.postburn..g., colour = Treatment), shape = 1, alpha = 0.4, position = position_jitterdodge(jitter.width = NULL, jitter.height = 0,dodge.width = 0.85)) +
+  geom_linerange(data = AlgaeWeight_Warm2020_boot, aes(x = N, ymin = lowerci, ymax = upperci, colour = Treatment), alpha = 0.1, size = 8, position = position_dodge(width = 0.85)) +
+  geom_point(data = AlgaeWeight_Warm2020_boot, aes(x = N, y = mean, colour = Treatment), shape = "-", size = 20, position = position_dodge(width = 0.85)) + # plots the mean value 
+  scale_colour_manual(name = "", values = colour.palette) + # adds the colours for plotting
+  ylab("Dry algae weight (g)") + # y-axis label
+  xlab("") +
+  ggtitle("Warm Season") +
+  scale_y_continuous(expand=c(0,0), breaks=seq(0, 15, 1), limits = c(0, 15)) + # makes the y-axis display as $
+  theme(axis.text.x = element_text(size = 9.5), axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5), legend.position = "bottom", legend.text = element_text(size = 10), legend.key.size = unit(0.5, "cm"), legend.key.height = unit(0.5, "cm")) + #Legend theme
+  guides(colour = guide_legend(override.aes = list(shape = 15, size=3)))
+
+```
+
+
+### Cold Season
+```{r cold season bootstraping}
+
+## Cold season GLM (I removed the +0.01 since you do not have any 0s here)
+cold_glm <- glm(Sample.weight.postburn..g. ~ Treatment * N, family = Gamma(link = "log"), data = AlgaeWeight_Cold2019)
+
+## Run parametric bootstrapping:
+newdata <- data.frame(Treatment = AlgaeWeight_Cold2019$Treatment, N = AlgaeWeight_Cold2019$N) # creates dataframe of predictor variables (here, Treatment and N)
+boot <- replicate(bootnum, bootFUN(model = cold_glm, newdata = newdata)) # run the bootFUN the number (bootnum) of times specified and save as matrix
+
+# Calculate the mean, 95% lowerCI, and 95% upperCI from the boot matrix and add it to dataframe (but as a new name)
+AlgaeWeight_Cold2019_boot <- cbind(AlgaeWeight_Cold2019, as.data.frame(t(apply(boot, 1, function(x) c(mean(x), quantile(x, c(0.025, 0.975)))))))
+colnames(AlgaeWeight_Cold2019_boot)[13:15] <- c("mean", "lowerci", "upperci") # rename mean/CI columns
+
+```
+
+```{r cold season boot plot}
+
+### Plot the observational values and bootstrapped mean/CI
+cold_boot_plot <- ggplot() +
+  theme_bw() + # sets plot theme (removes gridlines, etc.)
+  theme(panel.grid.major=element_blank(), panel.grid.minor=element_blank(), strip.text.x = element_blank(), panel.background=element_blank(), axis.line=element_line(color="black"), legend.key=element_blank(), strip.background = element_blank(), legend.position="none", panel.border = element_rect(colour = "black", size= 0.8))+
+  geom_point(data = AlgaeWeight_Cold2019_boot, aes(x = N , y = Sample.weight.postburn..g., colour = Treatment), shape = 1, alpha = 0.4, position = position_jitterdodge(jitter.width = NULL, jitter.height = 0,dodge.width = 0.85)) +
+  geom_linerange(data = AlgaeWeight_Cold2019_boot, aes(x = N, ymin = lowerci, ymax = upperci, colour = Treatment), alpha = 0.1, size = 8, position = position_dodge(width = 0.85)) +
+  geom_point(data = AlgaeWeight_Cold2019_boot, aes(x = N, y = mean, colour = Treatment), shape = "-", size = 20, position = position_dodge(width = 0.85)) + # plots the mean value 
+  scale_colour_manual(name = "", values = colour.palette) + # adds the colours for plotting
+  ylab("Dry algae weight (g)") + # y-axis label
+  xlab("") +
+  ggtitle("Cold Season") +
+  scale_y_continuous(expand=c(0,0), breaks=seq(0, 15, 1), limits = c(0, 15)) + # makes the y-axis display as $
+  theme(axis.text.x = element_text(size = 9.5), axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5), legend.position = "bottom", legend.text = element_text(size = 10), legend.key.size = unit(0.5, "cm"), legend.key.height = unit(0.5, "cm")) + #Legend theme
+  guides(colour = guide_legend(override.aes = list(shape = 15, size=3)))
+
+```
+
+
+### Cold and warm CI plot
+
+```{r combined CI plot}
+
+plot_grid(cold_boot_plot, warm_boot_plot, labels = c("C", "D"))
+
+```
 
