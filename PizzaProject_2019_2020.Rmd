@@ -7,7 +7,6 @@ output:
   html_document:
     df_print: paged
 always_allow_html: yes
-
 ---
 
 ```{r, warning=FALSE, message=FALSE}
@@ -22,6 +21,7 @@ library(stats)
 library(kableExtra)
 library(flextable)
 library(reshape2)
+library(xlsx)
 
 # Colleen added this one
 library(cowplot)
@@ -160,11 +160,11 @@ levels(AlgaeWeight_Cold2019$Treatment)<-(c("All present"="Open Cages", "Fish onl
 levels(AlgaeWeight_Warm2020$Treatment)<-(c("All present"="Open Cages", "Urchins Only"="Urchin access", "None present"="Full exclusion"))
 
 AlgaeWeight_Cold2019<-AlgaeWeight_Cold2019 %>%
-  filter(Treatment!="Fish access")%>%
-  filter(Sample.weight.postburn..g.!=0)
+  filter(Treatment!="Fish access")%>% #Removing exclussion treatment with access to fish
+  filter(Sample.weight.postburn..g.!=0) #Removing sampling units zeros
 
 AlgaeWeight_Warm2020<-AlgaeWeight_Warm2020 %>%
-    filter(Sample.weight.postburn..g.!=0)
+    filter(Sample.weight.postburn..g.!=0) # Removing zeros 
 ```
 
 ```{r}
@@ -402,19 +402,6 @@ warm_gamma_table <- add_header_lines(warm_gamma_table, values = "Warm season")
 save_as_image(warm_gamma_table, path = "warm_gamma_table.png")
 warm_gamma_table
 ```
-## Bootstraping to get bootstraping means and CI. 
-
-```{r}
-foo<- function (data, indices) {
-  dt<-data[indices,]
-  mean(dt[,11])
-}
-
-set.seed(12345)
-library(boot)
-myBootstrap<-boot(AlgaeWeight_Cold2019, foo, R=1000, strata=AlgaeWeight_Cold2019$Treatment)
-```
-
 
 ## Colleen's suggested bootstrapping method:
 
@@ -499,7 +486,7 @@ cold_boot_plot <- ggplot() +
   scale_colour_manual(name = "", values = colour.palette) + # adds the colours for plotting
   ylab("Dry algae weight (g)") + # y-axis label
   xlab("") +
-  ggtitle("Cold Season") +
+  ggtitle("Cool Season") +
   scale_y_continuous(expand=c(0,0), breaks=seq(0, 15, 1), limits = c(0, 15)) + # makes the y-axis display as $
   theme(axis.text.x = element_text(size = 9.5), axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5), legend.position = "bottom", legend.text = element_text(size = 10), legend.key.size = unit(0.5, "cm"), legend.key.height = unit(0.5, "cm")) + #Legend theme
   guides(colour = guide_legend(override.aes = list(shape = 15, size=3)))
@@ -507,11 +494,36 @@ cold_boot_plot <- ggplot() +
 ```
 
 
-### Cold and warm CI plot
+### Cold and warm Bootstrap CI plot
 
 ```{r combined CI plot}
 
-plot_grid(cold_boot_plot, warm_boot_plot, labels = c("C", "D"))
+Plot_bootstrapCI<-plot_grid(cold_boot_plot, warm_boot_plot, labels = c("C", "D"))
+Plot_bootstrapCI
 
+AlgaeWeight_bootCI<-ggarrange(cold_boot_plot, warm_boot_plot, nrow=1, common.legend = TRUE, labels = c("C", "D "),legend="bottom")
+
+png("AlgaeWeight_bootCI.png", width=15, height=10, units="cm", res=300)
+print(AlgaeWeight_bootCI)
+dev.off()
+```
+
+## Tables with boot mean and CI
+```{r}
+mean_AlgaeWeight_Cold2019_boot<-AlgaeWeight_Cold2019_boot%>%
+  group_by(Treatment, N)%>%
+  summarise(mean_weight=mean(Sample.weight.postburn..g.), mean_BS=mean(mean), lowerc=mean(lowerci), upperci=mean(upperci))
+
+mean_AlgaeWeight_Cold2019_boot<-as.data.frame(mean_AlgaeWeight_Cold2019_boot)
+
+mean_AlgaeWeight_Warm2020_boot<-AlgaeWeight_Warm2020_boot%>%
+  group_by(Treatment, N)%>%
+  summarise(mean_weight=mean(Sample.weight.postburn..g.), mean_BS=mean(mean), lowerc=mean(lowerci), upperci=mean(upperci))
+
+mean_AlgaeWeight_Warm2020_boot<-as.data.frame(mean_AlgaeWeight_Warm2020_boot)
+
+write.xlsx(mean_AlgaeWeight_Cold2019_boot, file="Tables.xlsx", sheetName = "Cold_WeightBoot",  col.names = TRUE, row.names = TRUE, append = FALSE)
+
+write.xlsx(mean_AlgaeWeight_Warm2020_boot, file="Tables.xlsx", sheetName = "Warm_WeightBoot",  col.names = TRUE, row.names = TRUE, append = TRUE)
 ```
 
