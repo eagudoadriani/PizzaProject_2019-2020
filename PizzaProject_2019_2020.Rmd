@@ -3,9 +3,9 @@ title: "Effect of herbivory and nutrients on Galapagos' algae"
 author: "Esteban Agudo"
 date: "8/25/2020"
 output:
-  word_document: default
   html_document:
     df_print: paged
+  word_document: default
 always_allow_html: yes
 ---
 
@@ -522,8 +522,18 @@ mean_AlgaeWeight_Warm2020_boot<-AlgaeWeight_Warm2020_boot%>%
 
 mean_AlgaeWeight_Warm2020_boot<-as.data.frame(mean_AlgaeWeight_Warm2020_boot)
 
+
+summary_cold_glm<-data.frame(coef(summary(cold_glm)))
+summary_warm_glm<-data.frame(coef(summary(warm_glm))) 
+
 write.xlsx(mean_AlgaeWeight_Cold2019_boot, file="Tables.xlsx", sheetName = "Cold_WeightBoot",  col.names = TRUE, row.names = TRUE, append = FALSE)
 
 write.xlsx(mean_AlgaeWeight_Warm2020_boot, file="Tables.xlsx", sheetName = "Warm_WeightBoot",  col.names = TRUE, row.names = TRUE, append = TRUE)
+
+write.xlsx(summary_cold_glm, file="Tables.xlsx", sheetName = "cold_glm",  col.names = TRUE, row.names = TRUE, append = TRUE)
+
+write.xlsx(summary_warm_glm 
+, file="Tables.xlsx", sheetName = "warm_glm",  col.names = TRUE, row.names = TRUE, append = TRUE)
+
 ```
 
