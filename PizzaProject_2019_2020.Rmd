@@ -76,7 +76,7 @@ Algae_CoverColdSeason<-ggplot(cold_2019_average, aes(x=Week, y=mean, colour=Trea
   scale_color_manual(values=colour.palette)
 ```
 
-### Plotting
+### Plotting_COLD
 ```{r, fig.height=5, fig.width=10}
 Algae_CoverColdSeason
 
@@ -103,7 +103,7 @@ warm_2020$Treatment<- factor(warm_2020$Treatment,
 
 levels(warm_2020$Treatment)<-(c("All present"="Open Cages",  "Urchins Only"="Urchin access", "None present"="Full exclusion"))
 ```
-### Plotting
+### Plotting_WARM
 ```{r, fig.height=5, fig.width=10}
 warm_2020_average<-warm_2020 %>%
   select(Cage.Number, Treatment, N, Week, Algae) %>%
@@ -129,6 +129,18 @@ dev.off()
 Figure 2: Effect of herbivore exclussion and nutrient addition on algae cover during warm season. 
 
 
+##Ploting both together 
+```{r}
+Cover_BothSeason<-ggarrange(Algae_CoverColdSeason
+,AlgaeCover_HotSeason, nrow=2, common.legend = TRUE, labels = c("A", "B"), hjust = -0.1, vjust = 1.5, legend="bottom")
+
+png("Cover_BothSeason.png", width=16, height=15, units="cm", res=300)
+print(Cover_BothSeason)
+dev.off()
+
+```
+
+
 ## Colleen stat exploration:
 ```{r cold season cover normal test}
 
@@ -146,7 +158,7 @@ shapiro.test(warm_2020$Algae)
 ```
 
 
-```{r bootstrap setup}
+#```{r bootstrap setup}
 
 ### Setup the bootstrap function and number of iterations
 
@@ -161,10 +173,10 @@ bootFUN <- function(model, newdata) {
 
 bootnum <- 1500 # this is the number of bootstrap replicates. I set it to 1500 here but we should select a number between 999 and 9999
 
-```
+#```
 
 ### Cold Season
-```{r cold cover bootstraping}
+#```{r cold cover bootstraping}
 
 ## Cold season GLM
 cold_cover_glm <- glm((Algae + 0.0001) ~ Treatment * N * as.integer(Week), family = Gamma(link = "log"), data = cold_2019)
@@ -177,9 +189,9 @@ boot <- replicate(bootnum, bootFUN(model = cold_cover_glm, newdata = newdata)) #
 cold_2019_boot <- cbind(cold_2019, as.data.frame(t(apply(boot, 1, function(x) c(mean(x), quantile(x, c(0.025, 0.975)))))))
 colnames(cold_2019_boot)[22:24] <- c("mean", "lowerci", "upperci") # rename mean/CI columns
 
-```
+#```
 
-```{r cool cover boot plot}
+#```{r cool cover boot plot}
 
 ### Plot the observational values and bootstrapped mean/CI
 cold_cover_boot_plot <- ggplot() +
@@ -198,10 +210,10 @@ cold_cover_boot_plot <- ggplot() +
   guides(colour = guide_legend(override.aes = list(shape = 15, size=3))) +
   facet_wrap(~ N, ncol = 2)
 
-```
+#```
 
 ### Cold Season
-```{r cold cover bootstraping}
+#```{r cold cover bootstraping_2}
 
 ## Cold season GLM
 cold_cover_glm <- glm((Algae + 0.0001) ~ Treatment * N * as.integer(Week), family = Gamma(link = "log"), data = cold_2019)
@@ -214,9 +226,9 @@ boot <- replicate(bootnum, bootFUN(model = cold_cover_glm, newdata = newdata)) #
 cold_2019_boot <- cbind(cold_2019, as.data.frame(t(apply(boot, 1, function(x) c(mean(x), quantile(x, c(0.025, 0.975)))))))
 colnames(cold_2019_boot)[22:24] <- c("mean", "lowerci", "upperci") # rename mean/CI columns
 
-```
+#```
 
-```{r cool cover boot plot}
+#```{r cool cover boot plot_2}
 
 ### Plot the observational values and bootstrapped mean/CI
 cold_cover_boot_plot <- ggplot() +
@@ -230,16 +242,16 @@ cold_cover_boot_plot <- ggplot() +
   ylab("Mean algal cover (%)") + # y-axis label
   xlab("Sampling Week") +
   ggtitle("Cool Season") +
- #scale_y_continuous(expand=c(0,0), breaks=seq(0, 15, 1), limits = c(0, 15)) + # makes the y-axis display as $
+ scale_y_continuous(expand=c(0,0), breaks=seq(0, 15, 1), limits = c(0, 15)) + # makes the y-axis display as $
   theme(axis.text.x = element_text(size = 9.5), axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5), legend.position = "bottom", legend.text = element_text(size = 10), legend.key.size = unit(0.5, "cm"), legend.key.height = unit(0.5, "cm")) + #Legend theme
   guides(colour = guide_legend(override.aes = list(shape = 15, size=3))) +
   facet_wrap(~ N, ncol = 2)
 
-```
+#```
 
 
 ### Warm Season -- This is not working yet, but wanted to upload things as they were at the moment
-```{r warm cover bootstraping}
+#```{r warm cover bootstraping}
 
 ## Warm season GLM
 warm_cover_glm <- glm((Algae + 0.001) ~ Treatment * N * Week, family = Gamma(link = "log"), data = warm_2020)
@@ -252,9 +264,9 @@ boot <- replicate(bootnum, bootFUN(model = warm_cover_glm, newdata = newdata)) #
 warm_2020_boot <- cbind(warm_2020, as.data.frame(t(apply(boot, 1, function(x) c(mean(x), quantile(x, c(0.025, 0.975)))))))
 colnames(warm_2020_boot)[22:24] <- c("mean", "lowerci", "upperci") # rename mean/CI columns
 
-```
+#```
 
-```{r warm cover boot plot}
+#```{r warm cover boot plot}
 
 ### Plot the observational values and bootstrapped mean/CI
 warm_cover_boot_plot <- ggplot() +
@@ -268,12 +280,12 @@ warm_cover_boot_plot <- ggplot() +
   ylab("Mean algal cover (%)") + # y-axis label
   xlab("Sampling Week") +
   ggtitle("Warm Season") +
-  #scale_y_continuous(expand=c(0,0), breaks=seq(0, 15, 1), limits = c(0, 15)) + # makes the y-axis display as $
+  scale_y_continuous(expand=c(0,0), breaks=seq(0, 15, 1), limits = c(0, 15)) + # makes the y-axis display as $
   theme(axis.text.x = element_text(size = 9.5), axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5), legend.position = "bottom", legend.text = element_text(size = 10), legend.key.size = unit(0.5, "cm"), legend.key.height = unit(0.5, "cm")) + #Legend theme
   guides(colour = guide_legend(override.aes = list(shape = 15, size=3))) +
   facet_wrap(~ N, ncol = 2)
 
-```
+#```
 
 
 ## End Colleen's exploration
@@ -558,7 +570,7 @@ warm_gamma_table
 
 ## Colleen's suggested bootstrapping method:
 
-```{r bootstrap setup}
+```{r bootstrap setup_2}
 
 ### Setup the bootstrap function and number of iterations
 
@@ -647,7 +659,7 @@ cold_boot_plot <- ggplot() +
 ```
 
 
-### Cold and warm Bootstrap CI plot
+### Cold and warm Bootstrap CI plot_CD
 
 ```{r combined CI plot}
 
@@ -660,6 +672,20 @@ png("AlgaeWeight_bootCI.png", width=15, height=10, units="cm", res=300)
 print(AlgaeWeight_bootCI)
 dev.off()
 ```
+
+### Cold and warm Bootstrap CI plot_AB
+```{r}
+Plot_bootstrapCI<-plot_grid(cold_boot_plot, warm_boot_plot, labels = c("A", "B"))
+Plot_bootstrapCI
+
+AlgaeWeight_bootCI<-ggarrange(cold_boot_plot, warm_boot_plot, nrow=1, common.legend = TRUE, labels = c("A", "B"),legend="bottom")
+
+png("AlgaeWeight_bootCI_AB.png", width=15, height=10, units="cm", res=300)
+print(AlgaeWeight_bootCI)
+dev.off()
+```
+
+
 
 ## Tables with boot mean and CI
 ```{r}
