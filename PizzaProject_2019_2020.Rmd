@@ -53,7 +53,7 @@ cold_2019$Treatment<-factor(cold_2019$Treatment,
       levels(cold_2019$Treatment)[c(1, 2, 4, 3)])
 
 #Changing the name of the levels in treatment
-levels(cold_2019$Treatment)<-(c("All present"="Open Cages", "Fish only"="Fish access", "Urchins Only"="Urchin access", "None present"="Full exclusion"))
+levels(cold_2019$Treatment)<-(c("All present"="Open Cages", "Fish only"="Fish access", "Urchins Only"="Fish exclusion", "None present"="Full exclusion"))
 ```
 
 Estimating values and preparing plot. 
@@ -101,7 +101,7 @@ warm_2020$N<-factor(warm_2020$N, levels(warm_2020$N)[2:1])
 warm_2020$Treatment<- factor(warm_2020$Treatment, 
               levels(warm_2020$Treatment)[c(1,3,2)])
 
-levels(warm_2020$Treatment)<-(c("All present"="Open Cages",  "Urchins Only"="Urchin access", "None present"="Full exclusion"))
+levels(warm_2020$Treatment)<-(c("All present"="Open Cages",  "Urchins Only"="Fish exclusion", "None present"="Full exclusion"))
 ```
 ### Plotting_WARM
 ```{r, fig.height=5, fig.width=10}
@@ -319,10 +319,10 @@ AlgaeWeight_Warm2020$Treatment<-factor(
   AlgaeWeight_Warm2020$Treatment, 
   levels(AlgaeWeight_Warm2020$Treatment)[c(1,3,2)])
 
-levels(AlgaeWeight_Cold2019$Treatment)<-(c("All present"="Open Cages", "Fish only"="Fish access", "Urchins Only"="Urchin access", "None present"="Full exclusion"))
+levels(AlgaeWeight_Cold2019$Treatment)<-(c("All present"="Open Cages", "Fish only"="Fish access", "Urchins Only"="Fish exclusion", "None present"="Full exclusion"))
 
 
-levels(AlgaeWeight_Warm2020$Treatment)<-(c("All present"="Open Cages", "Urchins Only"="Urchin access", "None present"="Full exclusion"))
+levels(AlgaeWeight_Warm2020$Treatment)<-(c("All present"="Open Cages", "Urchins Only"="Procedural Control", "None present"="Full exclusion"))
 
 AlgaeWeight_Cold2019<-AlgaeWeight_Cold2019 %>%
   filter(Treatment!="Fish access")%>% #Removing exclussion treatment with access to fish
@@ -591,6 +591,8 @@ bootnum <- 1500 # this is the number of bootstrap replicates. I set it to 1500 h
 ```{r warm season bootstraping}
 
 ## Warm season GLM (I removed the +0.01 since you do not have any 0s here)
+
+
 warm_glm <- glm(Sample.weight.postburn..g. ~ Treatment * N, family = Gamma(link = "log"), data = AlgaeWeight_Warm2020)
 
 ## Run parametric bootstrapping:
@@ -605,28 +607,35 @@ colnames(AlgaeWeight_Warm2020_boot)[12:14] <- c("mean", "lowerci", "upperci") # 
 
 ```{r warm season boot plot}
 
+colour.palette <- c("#999999", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+#I included this to remove the urching access treatment. 
+
+AlgaeWeight_Warm2020_boot_NU<-AlgaeWeight_Warm2020_boot %>%
+  filter(Treatment %in% c("Open Cages", "Full exclusion"))
+
 ### Plot the observational values and bootstrapped mean/CI
 warm_boot_plot <- ggplot() +
   theme_bw() + # sets plot theme (removes gridlines, etc.)
   theme(panel.grid.major=element_blank(), panel.grid.minor=element_blank(), strip.text.x = element_blank(), panel.background=element_blank(), axis.line=element_line(color="black"), legend.key=element_blank(), strip.background = element_blank(), legend.position="none", panel.border = element_rect(colour = "black", size= 0.8))+
-  geom_point(data = AlgaeWeight_Warm2020_boot, aes(x = N , y = Sample.weight.postburn..g., colour = Treatment), shape = 1, alpha = 0.4, position = position_jitterdodge(jitter.width = NULL, jitter.height = 0,dodge.width = 0.85)) +
-  geom_linerange(data = AlgaeWeight_Warm2020_boot, aes(x = N, ymin = lowerci, ymax = upperci, colour = Treatment), alpha = 0.1, size = 8, position = position_dodge(width = 0.85)) +
-  geom_point(data = AlgaeWeight_Warm2020_boot, aes(x = N, y = mean, colour = Treatment), shape = "-", size = 20, position = position_dodge(width = 0.85)) + # plots the mean value 
+  geom_point(data = AlgaeWeight_Warm2020_boot_NU, aes(x = N , y = Sample.weight.postburn..g., colour = Treatment), shape = 1, alpha = 0.4, position = position_jitterdodge(jitter.width = NULL, jitter.height = 0,dodge.width = 0.85)) +
+  geom_linerange(data = AlgaeWeight_Warm2020_boot_NU, aes(x = N, ymin = lowerci, ymax = upperci, colour = Treatment), alpha = 0.1, size = 8, position = position_dodge(width = 0.85)) +
+  geom_point(data = AlgaeWeight_Warm2020_boot_NU, aes(x = N, y = mean, colour = Treatment), shape = "-", size = 20, position = position_dodge(width = 0.85)) + # plots the mean value 
   scale_colour_manual(name = "", values = colour.palette) + # adds the colours for plotting
   ylab("Dry algae weight (g)") + # y-axis label
   xlab("") +
   ggtitle("Warm Season") +
   scale_y_continuous(expand=c(0,0), breaks=seq(0, 15, 1), limits = c(0, 15)) + # makes the y-axis display as $
-  theme(axis.text.x = element_text(size = 9.5), axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5), legend.position = "bottom", legend.text = element_text(size = 10), legend.key.size = unit(0.5, "cm"), legend.key.height = unit(0.5, "cm")) + #Legend theme
+  theme(axis.text.x = element_text(size = 9.5), axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5), legend.position = "bottom", legend.text = element_text(size = 8), legend.key.size = unit(0.4, "cm"), legend.key.height = unit(0.4, "cm")) + #Legend theme
   guides(colour = guide_legend(override.aes = list(shape = 15, size=3)))
 
 ```
-
 
 ### Cold Season
 ```{r cold season bootstraping}
 
 ## Cold season GLM (I removed the +0.01 since you do not have any 0s here)
+
 cold_glm <- glm(Sample.weight.postburn..g. ~ Treatment * N, family = Gamma(link = "log"), data = AlgaeWeight_Cold2019)
 
 ## Run parametric bootstrapping:
@@ -640,8 +649,12 @@ colnames(AlgaeWeight_Cold2019_boot)[13:15] <- c("mean", "lowerci", "upperci") # 
 ```
 
 ```{r cold season boot plot}
+colour.palette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 ### Plot the observational values and bootstrapped mean/CI
+
+#Include this to modify and remove urchin access
+
 cold_boot_plot <- ggplot() +
   theme_bw() + # sets plot theme (removes gridlines, etc.)
   theme(panel.grid.major=element_blank(), panel.grid.minor=element_blank(), strip.text.x = element_blank(), panel.background=element_blank(), axis.line=element_line(color="black"), legend.key=element_blank(), strip.background = element_blank(), legend.position="none", panel.border = element_rect(colour = "black", size= 0.8))+
@@ -653,7 +666,7 @@ cold_boot_plot <- ggplot() +
   xlab("") +
   ggtitle("Cool Season") +
   scale_y_continuous(expand=c(0,0), breaks=seq(0, 15, 1), limits = c(0, 15)) + # makes the y-axis display as $
-  theme(axis.text.x = element_text(size = 9.5), axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5), legend.position = "bottom", legend.text = element_text(size = 10), legend.key.size = unit(0.5, "cm"), legend.key.height = unit(0.5, "cm")) + #Legend theme
+  theme(axis.text.x = element_text(size = 9.5), axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5), legend.position = "bottom", legend.text = element_text(size = 8), legend.key.size = unit(0.4, "cm"), legend.key.height = unit(0.4, "cm")) + #Legend theme
   guides(colour = guide_legend(override.aes = list(shape = 15, size=3)))
 
 ```
@@ -666,7 +679,7 @@ cold_boot_plot <- ggplot() +
 Plot_bootstrapCI<-plot_grid(cold_boot_plot, warm_boot_plot, labels = c("C", "D"))
 Plot_bootstrapCI
 
-AlgaeWeight_bootCI<-ggarrange(cold_boot_plot, warm_boot_plot, nrow=1, common.legend = TRUE, labels = c("C", "D "),legend="bottom")
+AlgaeWeight_bootCI<-ggarrange(cold_boot_plot, warm_boot_plot, nrow=1, labels = c("C", "D "),legend="bottom")
 
 png("AlgaeWeight_bootCI.png", width=15, height=10, units="cm", res=300)
 print(AlgaeWeight_bootCI)
@@ -678,9 +691,9 @@ dev.off()
 Plot_bootstrapCI<-plot_grid(cold_boot_plot, warm_boot_plot, labels = c("A", "B"))
 Plot_bootstrapCI
 
-AlgaeWeight_bootCI<-ggarrange(cold_boot_plot, warm_boot_plot, nrow=1, common.legend = TRUE, labels = c("A", "B"),legend="bottom")
+AlgaeWeight_bootCI<-ggarrange(cold_boot_plot, warm_boot_plot, nrow=1, labels = c("A", "B"),legend="bottom")
 
-png("AlgaeWeight_bootCI_AB.png", width=15, height=10, units="cm", res=300)
+png("AlgaeWeight_bootCI_AB.png", width=17, height=10, units="cm", res=300)
 print(AlgaeWeight_bootCI)
 dev.off()
 ```
@@ -714,5 +727,34 @@ write.xlsx(summary_cold_glm, file="Tables.xlsx", sheetName = "cold_glm",  col.na
 write.xlsx(summary_warm_glm 
 , file="Tables.xlsx", sheetName = "warm_glm",  col.names = TRUE, row.names = TRUE, append = TRUE)
 
+```
+
+## Suplementary information 
+
+```{r}
+
+#Comparing control open cage with procedural control 
+
+AlgaeWeight_Warm2020_boot<-AlgaeWeight_Warm2020_boot %>% filter(Treatment %in% c("Open Cages", "Procedural Control")) 
+
+Warm_ControlProcedure <- ggplot() +
+  theme_bw() + # sets plot theme (removes gridlines, etc.)
+  theme(panel.grid.major=element_blank(), panel.grid.minor=element_blank(), strip.text.x = element_blank(), panel.background=element_blank(), axis.line=element_line(color="black"), legend.key=element_blank(), strip.background = element_blank(), legend.position="none", panel.border = element_rect(colour = "black", size= 0.8))+
+  geom_point(data = AlgaeWeight_Warm2020_boot, aes(x = N , y = Sample.weight.postburn..g., colour = Treatment), shape = 1, alpha = 0.4, position = position_jitterdodge(jitter.width = NULL, jitter.height = 0,dodge.width = 0.85)) +
+  geom_linerange(data = AlgaeWeight_Warm2020_boot, aes(x = N, ymin = lowerci, ymax = upperci, colour = Treatment), alpha = 0.1, size = 8, position = position_dodge(width = 0.85)) +
+  geom_point(data = AlgaeWeight_Warm2020_boot, aes(x = N, y = mean, colour = Treatment), shape = "-", size = 20, position = position_dodge(width = 0.85)) + # plots the mean value 
+  scale_colour_manual(name = "", values = colour.palette) + # adds the colours for plotting
+  ylab("Dry algae weight (g)") + # y-axis label
+  xlab("") +
+  ggtitle("Warm Season") +
+  scale_y_continuous(expand=c(0,0), breaks=seq(0, 7, 1), limits = c(0, 8)) + # makes the y-axis display as $
+  theme(axis.text.x = element_text(size = 9.5), axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5), legend.position = "bottom", legend.text = element_text(size = 10), legend.key.size = unit(0.5, "cm"), legend.key.height = unit(0.5, "cm")) + #Legend theme
+  guides(colour = guide_legend(override.aes = list(shape = 15, size=3)))
+
+png("WarmProceduralControl.png", width=8, height=10, units="cm", res=300)
+print(Warm_ControlProcedure)
+dev.off()
+
+Warm_ControlProcedure
 ```
 
