@@ -36,23 +36,16 @@ library(MASS)
 Uploading data for the cold season, then preparing data for plotting. 
 ```{r}
 cold_2019<-read.csv(file="AlgaeCover_Cold2019.csv", header=T)
-
 cold_2019<-na.omit(cold_2019)
-
 cold_2019$Week<-as.factor(cold_2019$Week)
 cold_2019$Cage.Number<-as.factor(cold_2019$Cage.Number)
 
 #Changing the names and reordering levels of the factor nutrient addition.
-
-levels(cold_2019$N)<-(c("N+"="Nutrient addition", "No N"="Ambient nutrients"))
-
-cold_2019$N<-factor(cold_2019$N, levels(cold_2019$N)[2:1])
-
-levels(cold_2019$N)
+cold_2019$N <- factor(cold_2019$N, levels = c("No N", "N+"))
+levels(cold_2019$N) <- (c("N+" = "Nutrient addition", "No N" = "Ambient nutrients"))
 
 #Reordering  the levels of the treatments
-cold_2019$Treatment<-factor(cold_2019$Treatment,
-      levels(cold_2019$Treatment)[c(1, 2, 4, 3)])
+cold_2019$Treatment <- factor(cold_2019$Treatment, levels = c("All present", "Fish only", "Urchins Only", "None present"))
 
 #Changing the name of the levels in treatment
 levels(cold_2019$Treatment)<-(c("All present"="Open Cages", "Fish only"="Fish access", "Urchins Only"="Fish exclusion", "None present"="Full exclusion"))
@@ -69,22 +62,20 @@ summarise(mean=mean(Algae), se=sd(Algae)/sqrt(length(Algae))) %>%
 # Ploting weekly changes for the cold season 
 colour.palette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-Algae_CoverColdSeason<-ggplot(cold_2019_average, aes(x=Week, y=mean, colour=Treatment, group=Treatment)) + 
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=.8, position=position_dodge(width=0.4), linetype="dotted", size=.4)+
-    geom_line(position=position_dodge(width=0.4)) +
-    geom_point(size = 2, position=position_dodge(width=0.4))+ 
-  facet_wrap(~N, nrow=1) +theme_bw()+theme(legend.position = "bottom")+ theme(panel.grid.major = element_blank(), panel.grid.minor=element_blank())+
-  labs(y="Mean algae cover (%)", x="Sampling week")+
+Algae_CoverColdSeason <- ggplot(cold_2019_average, aes(x=Week, y=mean, colour=Treatment, group=Treatment)) + 
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=.8, position=position_dodge(width=0.4), linetype="dotted", size=.4) +
+  geom_line(position=position_dodge(width=0.4)) +
+  geom_point(size = 2, position=position_dodge(width=0.4)) + 
+  facet_wrap(~N, nrow=1) +theme_bw()+theme(legend.position = "bottom") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor=element_blank()) +
+  labs(y="Mean algae cover (%)", x="Sampling week") +
   scale_color_manual(values=colour.palette)
 ```
 
 ### Plotting_COLD
 ```{r, fig.height=5, fig.width=10}
 Algae_CoverColdSeason
-
-png("AlgaeCover_ColdSeason.png", width=14, height=10, units="cm", res=300)
-print(Algae_CoverColdSeason)
-dev.off()
+ggsave("AlgaeCover_ColdSeason.png", width = 20, height = 10, units = "cm", dpi = 300)
 ```
 Figure 1: Effect of herbivore exclussion and nutrient addition on weekly algae cover during cold season. 
 
@@ -92,27 +83,30 @@ Figure 1: Effect of herbivore exclussion and nutrient addition on weekly algae c
 Loading and preparing data of the warm season
 ```{r}
 #Loading and preparing data
-warm_2020<-read.csv("AlgaeCover_Warm2020.csv", header=T)
-warm_2020$Cage.Number<-as.factor(warm_2020$Cage.Number)
+warm_2020<-read.csv(file="AlgaeCover_Warm2020.csv", header=T)
+warm_2020<-na.omit(warm_2020)
 warm_2020$Week<-as.factor(warm_2020$Week)
+warm_2020$Cage.Number<-as.factor(warm_2020$Cage.Number)
 
-levels(warm_2020$N)<-(c("N+"="Nutrient addition", "No N"="Ambient nutrients"))
+#Changing the names and reordering levels of the factor nutrient addition.
+warm_2020$N <- factor(warm_2020$N, levels = c("No N", "N+"))
+levels(warm_2020$N) <- (c("N+" = "Nutrient addition", "No N" = "Ambient nutrients"))
 
-warm_2020$N<-factor(warm_2020$N, levels(warm_2020$N)[2:1])
+#Reordering  the levels of the treatments
+warm_2020$Treatment <- factor(warm_2020$Treatment, levels = c("All present", "Urchins Only", "None present"))
 
-warm_2020$Treatment<- factor(warm_2020$Treatment, 
-              levels(warm_2020$Treatment)[c(1,3,2)])
-
-levels(warm_2020$Treatment)<-(c("All present"="Open Cages",  "Urchins Only"="Fish exclusion", "None present"="Full exclusion"))
+#Changing the name of the levels in treatment
+levels(warm_2020$Treatment)<-(c("All present"="Open Cages", "Urchins Only"="Fish exclusion", "None present"="Full exclusion"))
 ```
+
 ### Plotting_WARM
 ```{r, fig.height=5, fig.width=10}
-warm_2020_average<-warm_2020 %>%
+warm_2020_average <- warm_2020 %>%
   dplyr::select(Cage.Number, Treatment, N, Week, Algae) %>%
 group_by(Week,Treatment, N) %>%
 summarise(mean=mean(Algae), se=sd(Algae)/sqrt(length(Algae)))
 
-AlgaeCover_HotSeason<-ggplot(warm_2020_average, aes(x=Week, y=mean, colour=Treatment, group=Treatment)) + 
+AlgaeCover_HotSeason <- ggplot(warm_2020_average, aes(x=Week, y=mean, colour=Treatment, group=Treatment)) + 
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=.8, position=position_dodge(width=0.4), linetype="dotted",size=.4)+
     geom_line(position=position_dodge(width=0.4)) +
     geom_point(size=2, position=position_dodge(width=0.4))+ facet_wrap(~N, nrow=1) +theme_bw()+theme(legend.position = "bottom")+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
@@ -123,10 +117,7 @@ AlgaeCover_HotSeason<-ggplot(warm_2020_average, aes(x=Week, y=mean, colour=Treat
 
 ```{r, fig.height=5, fig.width=10}
 AlgaeCover_HotSeason
-
-png("AlgaeCover_HotSeason.png", width=14, height=10, units="cm", res=300)
-print(AlgaeCover_HotSeason)
-dev.off()
+ggsave("AlgaeCover_HotSeason.png", width = 18, height = 10, units = "cm", dpi = 300)
 ```
 Figure 2: Effect of herbivore exclussion and nutrient addition on algae cover during warm season. 
 
@@ -164,63 +155,60 @@ shapiro.test(warm_2020$Algae)
 
 Data uploading and preparation including changing names and reordering factors.
 ```{r}
-#Loading data
-AlgaeWeight_Cold2019<-read.csv(file="AlgaeWeight_Cold2019.csv") # I changed this to 'AlgaeWeight_Cold2020.csv' from 'AlgaeWeight_Cold2019.csv' since that file did not exist
-AlgaeWeight_Warm2020<-read.csv(file="AlgaeWeight_Warm2020.csv")
+## Loading Cold season data
+AlgaeWeight_Cold2019 <- read.csv(file = "AlgaeWeight_Cold2019.csv") 
 
 #Reordering and renaming Factor: Nutrient
-levels(AlgaeWeight_Cold2019$N)<-c("N+"="Nutrient addition", "No N"="Ambient nutrients")
-
-levels(AlgaeWeight_Warm2020$N)<-c("N+"="Nutrient addition", "No N"="Ambient nutrients")
-
-AlgaeWeight_Cold2019$N<-factor(AlgaeWeight_Cold2019$N, levels(AlgaeWeight_Cold2019$N)[2:1])
-
-AlgaeWeight_Warm2020$N<-factor(AlgaeWeight_Warm2020$N, levels(AlgaeWeight_Warm2020$N)[2:1])
+AlgaeWeight_Cold2019$N <- factor(AlgaeWeight_Cold2019$N, levels = c("N+", "No N"))
+levels(AlgaeWeight_Cold2019$N) <- c("N+" = "Nutrient addition", "No N" = "Ambient nutrients")
 
 #Reordering and renaming factor Treatment
-AlgaeWeight_Cold2019$Treatment<-factor(
-  AlgaeWeight_Cold2019$Treatment, 
-    levels(AlgaeWeight_Cold2019$Treatment)[c(1,2,4,3)])
+AlgaeWeight_Cold2019$Treatment <- factor(AlgaeWeight_Cold2019$Treatment, levels = c("All present", "Fish Only", "Urchins Only", "None present"))
+levels(AlgaeWeight_Cold2019$Treatment)<-(c("All present"="Open Cages", "Fish Only"="Fish access", "Urchins Only"="Fish exclusion", "None present"="Full exclusion"))
 
-AlgaeWeight_Warm2020$Treatment<-factor(
-  AlgaeWeight_Warm2020$Treatment, 
-  levels(AlgaeWeight_Warm2020$Treatment)[c(1,3,2)])
-
-levels(AlgaeWeight_Cold2019$Treatment)<-(c("All present"="Open Cages", "Fish only"="Fish access", "Urchins Only"="Fish exclusion", "None present"="Full exclusion"))
+AlgaeWeight_Cold2019 <- AlgaeWeight_Cold2019 %>%
+  filter(Treatment != "Fish access") %>% #Removing exclussion treatment with access to fish
+  filter(AFDW..g...preburn..postburn. != 0) #Removing sampling units zeros
 
 
-levels(AlgaeWeight_Warm2020$Treatment)<-(c("All present"="Open Cages", "Urchins Only"="Procedural Control", "None present"="Full exclusion"))
 
-AlgaeWeight_Cold2019<-AlgaeWeight_Cold2019 %>%
-  filter(Treatment!="Fish access")%>% #Removing exclussion treatment with access to fish
-  filter(Sample.weight.postburn..g.!=0) #Removing sampling units zeros
+## Loading Warm season data
+AlgaeWeight_Warm2020 <- read.csv(file = "AlgaeWeight_Warm2020.csv") 
 
-AlgaeWeight_Warm2020<-AlgaeWeight_Warm2020 %>%
-    filter(Sample.weight.postburn..g.!=0) # Removing zeros 
+#Reordering and renaming Factor: Nutrient
+AlgaeWeight_Warm2020$N <- factor(AlgaeWeight_Warm2020$N, levels = c("N+", "No N"))
+levels(AlgaeWeight_Warm2020$N) <- c("N+" = "Nutrient addition", "No N" = "Ambient nutrients")
+
+#Reordering and renaming factor Treatment
+AlgaeWeight_Warm2020$Treatment <- factor(AlgaeWeight_Warm2020$Treatment, levels = c("All present", "Urchins Only", "None Present"))
+levels(AlgaeWeight_Warm2020$Treatment)<-(c("All present"="Open Cages", "Urchins Only"="Fish exclusion", "None Present"="Full exclusion"))
+
+AlgaeWeight_Warm2020 <- AlgaeWeight_Warm2020 %>%
+  filter(AFDW..g...preburn..postburn. != 0) # Removing zeros
+ 
 ```
 
 ```{r}
-AlgaeWeight_Cold2019_Average<-AlgaeWeight_Cold2019 %>%
+AlgaeWeight_Cold2019_Average <- AlgaeWeight_Cold2019 %>%
   group_by(Treatment, N) %>%
-  summarise(Mean_AlgaeWeight=mean(Sample.weight.postburn..g.), 
-            se=sd(Sample.weight.postburn..g.)/sqrt(length(Sample.weight.postburn..g.))) 
+  summarise(Mean_AlgaeWeight=mean(AFDW..g...preburn..postburn.), 
+            se=sd(AFDW..g...preburn..postburn.)/sqrt(length(AFDW..g...preburn..postburn.))) 
 
-AlgaeWeight_Warm2020_Average<-AlgaeWeight_Warm2020 %>%
+AlgaeWeight_Warm2020_Average <- AlgaeWeight_Warm2020 %>%
   group_by(Treatment, N) %>%
-  summarise(Mean_AlgaeWeight=mean(Sample.weight.postburn..g.), 
-            se=sd(Sample.weight.postburn..g.)/sqrt(length(Sample.weight.postburn..g.)))
+  summarise(Mean_AlgaeWeight=mean(AFDW..g...preburn..postburn.), 
+            se=sd(AFDW..g...preburn..postburn.)/sqrt(length(AFDW..g...preburn..postburn.)))
 ```
 ### Ploting Box plots (using collen code)  for cold season 
 
 ```{r}
 # Summarizing data for each plot in order
-
-summary.df <- AlgaeWeight_Cold2019 %>% 
+AlgaeWeight_Cold2019_sum <- AlgaeWeight_Cold2019 %>% 
   group_by(Treatment, N) %>% # input your grouping variable (seperate by commas if more than one)
-  summarize(mean = round(mean(Sample.weight.postburn..g., na.rm = TRUE), 2),
-            max = round(max(Sample.weight.postburn..g., na.rm = TRUE), 2),
-            min = round(min(Sample.weight.postburn..g., na.rm = TRUE), 2),
-            sd = sd(Sample.weight.postburn..g., na.rm = TRUE),
+  summarize(mean = round(mean(AFDW..g...preburn..postburn., na.rm = TRUE), 2),
+            max = round(max(AFDW..g...preburn..postburn., na.rm = TRUE), 2),
+            min = round(min(AFDW..g...preburn..postburn., na.rm = TRUE), 2),
+            sd = sd(AFDW..g...preburn..postburn., na.rm = TRUE),
             n = n(),
           se=sd / sqrt(n))%>% 
   mutate(lowerci = mean - qt(1 - (0.05 / 2), n - 1) * se,
@@ -229,10 +217,10 @@ summary.df <- AlgaeWeight_Cold2019 %>%
 ```
 
 ```{r}
-X <- summary.df$N # item to plot on x-axis
-df <- summary.df # dataframe containing your summary stats
-colour <- summary.df$Treatment # item to colour data by  
-overall.mean <- round(mean(AlgaeWeight_Cold2019$Sample.weight.postburn..g.), 2) # modify this to change location of dashed line
+X <- AlgaeWeight_Cold2019_sum$N # item to plot on x-axis
+#df <- AlgaeWeight_Cold2019_sum # dataframe containing your summary stats
+colour <- AlgaeWeight_Cold2019_sum$Treatment # item to colour data by  
+overall.mean <- round(mean(AlgaeWeight_Cold2019$AFDW..g...preburn..postburn.), 2) # modify this to change location of dashed line
 ylab <- "Dry algae weight(gr)" # input y-axis label here (put "" if you want to leave label blank)
 xlab <- "" # input x-axis label here (put "" if you want to leave label blank)
 title <- "" # overall plot title (put "" if no title)
@@ -244,48 +232,49 @@ colour.palette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#007
 ### Plotting: Algae weight during cold season   
 
 ```{r}
-P1<-ggplot() +
-  theme_classic() + # sets plot theme (removes gridlines, etc.)
-  theme(panel.border = element_rect(colour = "black", fill=NA, size=0.7)) + # adds box around plot area
+P1 <- ggplot() +
+  theme_bw() + # sets plot theme (removes gridlines, etc.)
   #geom_hline(yintercept = overall.mean, colour = "darkgrey", linetype = 2) + # dashed line
-  geom_point(data = AlgaeWeight_Cold2019, aes(x =N , y = Sample.weight.postburn..g., colour = Treatment), shape = 1, alpha = 0.4,              position = position_jitterdodge(jitter.width = NULL, jitter.height = 0,dodge.width = 0.85)) +
-  geom_errorbar(data = df, aes(x = X, ymin = mean-se, ymax = mean+se, colour = colour), size = 8, width = 0, alpha = 0.6, position = position_dodge(width = 0.85), show.legend = FALSE) + # this plots SE behind the mean, can use also CI with summarize
-  geom_point(data = df, aes(x = X, y = mean, colour = colour), shape = "-", size = 20, position = position_dodge(width = 0.85)) + # plots the mean value 
+  geom_point(data = AlgaeWeight_Cold2019, aes(x =N , y = AFDW..g...preburn..postburn., colour = Treatment), shape = 1, alpha = 0.4,              position = position_jitterdodge(jitter.width = NULL, jitter.height = 0,dodge.width = 0.85)) +
+  geom_errorbar(data = AlgaeWeight_Cold2019_sum, aes(x = X, ymin = mean-se, ymax = mean+se, colour = colour), size = 8, width = 0, alpha = 0.6, position = position_dodge(width = 0.85), show.legend = FALSE) + # this plots SE behind the mean, can use also CI with summarize
+  geom_point(data = AlgaeWeight_Cold2019_sum, aes(x = X, y = mean, colour = colour), shape = "-", size = 20, position = position_dodge(width = 0.85)) + # plots the mean value 
   scale_colour_manual(name = "", values = colour.palette) + # adds the colours for plotting
   ylab(ylab) + # y-axis label
-scale_y_continuous(expand=c(0,0), breaks=seq(0, 15, 1), limits = c(0, 15)) + # makes the y-axis display as $
+  scale_y_continuous(expand=c(0,0), breaks=seq(0, 50, 10), limits = c(0, 50)) + # makes the y-axis display
   xlab(xlab) + # x-axis label
-   ggtitle(title)+ # whole plot title
+  ggtitle(title)+ # whole plot title
   theme(axis.text.x = element_text(size = 9.5),
         axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5),
-      legend.position = "bottom", 
-      legend.text = element_text(size = 10),  
-      legend.key.size = unit(0.5, "cm"),
-      legend.key.height = unit(0.5, "cm"))+ #Legend theme
-     guides(colour = guide_legend(override.aes = list(shape = 15, size=3)))
+        legend.position = "bottom", 
+        legend.text = element_text(size = 10),  
+        legend.key.size = unit(0.5, "cm"),
+        legend.key.height = unit(0.5, "cm"),
+        panel.grid = element_blank()) + #Legend theme
+  guides(colour = guide_legend(override.aes = list(shape = 15, size=3)))
 ```
+
 ### Plotting effect herbivory and nutrient addition on algae weight during warm season
 ```{r}
 # summarizing
-
-summary.df <- AlgaeWeight_Warm2020 %>% 
+AlgaeWeight_Warm2020_sum <- AlgaeWeight_Warm2020 %>% 
   group_by(Treatment, N) %>% # input your grouping variable (seperate by commas if more than one)
-  summarize(mean = round(mean(Sample.weight.postburn..g., na.rm = TRUE), 2),
-            max = round(max(Sample.weight.postburn..g., na.rm = TRUE), 2),
-            min = round(min(Sample.weight.postburn..g., na.rm = TRUE), 2),
-            sd = sd(Sample.weight.postburn..g., na.rm = TRUE),
+  summarize(mean = round(mean(AFDW..g...preburn..postburn., na.rm = TRUE), 2),
+            max = round(max(AFDW..g...preburn..postburn., na.rm = TRUE), 2),
+            min = round(min(AFDW..g...preburn..postburn., na.rm = TRUE), 2),
+            sd = sd(AFDW..g...preburn..postburn., na.rm = TRUE),
             n = n(),
             se=sd/sqrt(n)) %>% 
   mutate(lowerci = mean - qt(1 - (0.05 / 2), n - 1) * se,
          upperci = mean + qt(1 - (0.05 / 2), n - 1) * se)
 
 ```
+
 Estimating values for plot
 ```{r}
-X <- summary.df$N # item to plot on x-axis
-df <- summary.df # dataframe containing your summary stats
-colour <- summary.df$Treatment # item to colour data by  
-overall.mean <- round(mean(AlgaeWeight_Warm2020$Sample.weight.postburn..g.), 2) # modify this to change location of dashed line
+X <- AlgaeWeight_Warm2020_sum$N # item to plot on x-axis
+#df <- AlgaeWeight_Warm2020_sum # dataframe containing your summary stats
+colour <- AlgaeWeight_Warm2020_sum$Treatment # item to colour data by  
+overall.mean <- round(mean(AlgaeWeight_Warm2020$AFDW..g...preburn..postburn.), 2) # modify this to change location of dashed line
 ylab <- "Dry algae weight(gr)" # input y-axis label here (put "" if you want to leave label blank)
 xlab <- "" # input x-axis label here (put "" if you want to leave label blank)
 title <- "" # overall plot title (put "" if no title)
@@ -296,84 +285,87 @@ colour.palette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#007
 
 Let's build the same plot fot the warm season  
 ```{r}
-P2<-ggplot() +
-  theme_classic() + # sets plot theme (removes gridlines, etc.)
+P2 <- ggplot() +
+  theme_bw() + # sets plot theme (removes gridlines, etc.)
   theme(panel.border = element_rect(colour = "black", fill=NA, size=0.7)) + # adds box around plot area
   #geom_hline(yintercept = overall.mean, colour = "darkgrey", linetype = 2) + # dashed line
-  geom_point(data = AlgaeWeight_Warm2020, aes(x =N , y = Sample.weight.postburn..g., colour = Treatment), shape = 1, alpha = 0.4,              position = position_jitterdodge(jitter.width = NULL, jitter.height = 0,dodge.width = 0.85)) +
-  geom_errorbar(data = df, aes(x = X, ymin = mean-se, ymax = mean+se, colour = colour), size = 8, width = 0, alpha = 0.6, position = position_dodge(width = 0.85), show.legend = FALSE) + # this plots SE behind the mean-Can change a CI using CI in summarize
-  geom_point(data = df, aes(x = X, y = mean, colour = colour), shape = "-", size = 20, position = position_dodge(width = 0.85)) + # plots the mean value 
+  geom_point(data = AlgaeWeight_Warm2020, aes(x =N , y = AFDW..g...preburn..postburn., colour = Treatment), shape = 1, alpha = 0.4,              position = position_jitterdodge(jitter.width = NULL, jitter.height = 0,dodge.width = 0.85)) +
+  geom_errorbar(data = AlgaeWeight_Warm2020_sum, aes(x = X, ymin = mean-se, ymax = mean+se, colour = colour), size = 8, width = 0, alpha = 0.6, position = position_dodge(width = 0.85), show.legend = FALSE) + # this plots SE behind the mean-Can change a CI using CI in summarize
+  geom_point(data = AlgaeWeight_Warm2020_sum, aes(x = X, y = mean, colour = colour), shape = "-", size = 20, position = position_dodge(width = 0.85)) + # plots the mean value 
   scale_colour_manual(name = "", values = colour.palette) + # adds the colours for plotting
   ylab(ylab) + # y-axis label
-scale_y_continuous(expand=c(0,0), breaks=seq(0, 15, 1), limits = c(0, 15)) + # makes the y-axis display as $
+  scale_y_continuous(expand=c(0,0), breaks=seq(0, 50, 10), limits = c(0, 50)) + # makes the y-axis display
   xlab(xlab) + # x-axis label
-   ggtitle(title)+ #legend theme
+  ggtitle(title)+ #legend theme
   theme(axis.text.x = element_text(size = 9.5),
         axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5),
-      legend.position = "bottom", 
-      legend.text = element_text(size =10), 
-      legend.key.size = unit(0.5, "cm"),  
-      legend.key.height = unit(0.5, "cm"))+
+        legend.position = "bottom", 
+        legend.text = element_text(size = 10),  
+        legend.key.size = unit(0.5, "cm"),
+        legend.key.height = unit(0.5, "cm"),
+        panel.grid = element_blank()) + #Legend theme
     guides(colour = guide_legend(override.aes = list(shape = 15, size=3)))#Legend them
 ```
 
-Comparation between the effect of herbivore exclussion and nutrient addition across cold season and warm season. 
+Comparison between the effect of herbivore exclussion and nutrient addition across cold season and warm season. 
 ```{r}
-Algae_weight<-ggarrange(P1, P2, nrow=1, common.legend = TRUE, labels = c("Cold Season", "Warm Season"),            legend="bottom")
-
+Algae_weight <- ggarrange(P1, P2, nrow=1, common.legend = TRUE, labels = c("Cold Season", "Warm Season"), legend = "bottom")
 Algae_weight
-png("AlgaeWeights_se.png", width=15, height=10, units="cm", res=300)
-print(Algae_weight)
-dev.off()
+
+ggsave("AlgaeWeights_se.png", width = 22, height = 10, units = "cm", dpi = 300)
 ```
+
 
 ## Analysis of effect between herbivore exclussion and nutriend addition on algae weight
 
 Let's start by checking data distribution:
 
 ```{r}
-hist(AlgaeWeight_Cold2019$Sample.weight.postburn..g.)
-hist(AlgaeWeight_Warm2020$Sample.weight.postburn..g.)
+hist(AlgaeWeight_Cold2019$AFDW..g...preburn..postburn.)
+hist(AlgaeWeight_Warm2020$AFDW..g...preburn..postburn.)
 
 #It is slightly skewed so a sqrt transformation can do the job
-hist(log(AlgaeWeight_Cold2019$Sample.weight.postburn..g.))
-hist(sqrt(AlgaeWeight_Cold2019$Sample.weight.postburn..g.))
+hist(log(AlgaeWeight_Cold2019$AFDW..g...preburn..postburn.))
+hist(sqrt(AlgaeWeight_Cold2019$AFDW..g...preburn..postburn.))
 
-qqnorm(sqrt(AlgaeWeight_Cold2019$Sample.weight.postburn..g.))
-qqline(sqrt(AlgaeWeight_Cold2019$Sample.weight.postburn..g.))
+qqnorm(sqrt(AlgaeWeight_Cold2019$AFDW..g...preburn..postburn.))
+qqline(sqrt(AlgaeWeight_Cold2019$AFDW..g...preburn..postburn.))
 
-qqnorm(log(AlgaeWeight_Cold2019$Sample.weight.postburn..g.+0.001))
-qqline(log(AlgaeWeight_Cold2019$Sample.weight.postburn..g.+0.001))
+qqnorm(log(AlgaeWeight_Cold2019$AFDW..g...preburn..postburn.+0.001))
+qqline(log(AlgaeWeight_Cold2019$AFDW..g...preburn..postburn.+0.001))
 
-shapiro.test(AlgaeWeight_Cold2019$Sample.weight.postburn..g.)
-shapiro.test(sqrt(AlgaeWeight_Cold2019$Sample.weight.postburn..g.))
-n#still not normal
+shapiro.test(AlgaeWeight_Cold2019$AFDW..g...preburn..postburn.)
+shapiro.test(sqrt(AlgaeWeight_Cold2019$AFDW..g...preburn..postburn.))
+#still not normal
+
 #It is severe skewed so we can do a log10 transformation
-hist(log10(AlgaeWeight_Warm2020$Sample.weight.postburn..g.))
-shapiro.test(AlgaeWeight_Warm2020$Sample.weight.postburn..g)
-shapiro.test(sqrt(AlgaeWeight_Warm2020$Sample.weight.postburn..g))
+hist(log10(AlgaeWeight_Warm2020$AFDW..g...preburn..postburn.))
+shapiro.test(AlgaeWeight_Warm2020$AFDW..g...preburn..postburn.)
+shapiro.test(sqrt(AlgaeWeight_Warm2020$AFDW..g...preburn..postburn.))
 ```
 Even after transformation data does not seems to resemble normality so we should not use an Anova or any other parametric test. 
 
 ### Determine effect of herbivory and nutriend addition using a GLM 
 ```{r}
-#Let's try with a  glm using a gamma distribution. We add 0.0001 as this model cannot work with 0
+# Let's try with a  glm using a gamma distribution. 
 
-cold_season_model_gamma<-glm((Sample.weight.postburn..g.+0.01)~Treatment*N, family = Gamma(link="log"), data=AlgaeWeight_Cold2019)
+cold_season_model_gamma <- glm((AFDW..g...preburn..postburn.) ~ Treatment * N, family = Gamma(link = "log"), data = AlgaeWeight_Cold2019)
 summary(cold_season_model_gamma)
 
 # Let's build a similar model without the interaction
-cold_season_model_gamma_NI<-glm((Sample.weight.postburn..g.+0.01)~Treatment+N, family = Gamma(link="log"), data=AlgaeWeight_Cold2019)
+cold_season_model_gamma_NI<-glm((AFDW..g...preburn..postburn.) ~ Treatment + N, family = Gamma(link = "log"), data = AlgaeWeight_Cold2019)
 summary(cold_season_model_gamma_NI)
-#Comparing models with and without interaction
-anova(cold_season_model_gamma, cold_season_model_gamma_NI, test='Chisq')
-anova(cold_season_model_gamma, test='Chisq') 
 
-#Building a similar model for the warm season
-warm_season_model_gamma<-glm((Sample.weight.postburn..g.+0.01)~Treatment+N+Treatment*N, family = Gamma(link="log"), data=AlgaeWeight_Warm2020)
+#Comparing models with and without interaction
+anova(cold_season_model_gamma, cold_season_model_gamma_NI, test = 'Chisq')
+anova(cold_season_model_gamma, test = 'Chisq') 
+
+##Building a similar model for the warm season
+warm_season_model_gamma <- glm((AFDW..g...preburn..postburn.) ~ Treatment * N, family = Gamma(link="log"), data = AlgaeWeight_Warm2020)
 summary(warm_season_model_gamma)
 
 ```
+
 ### Putting results from gamma model in a table
 ```{r}
 #Let's build the table for the model with the gamma distribution
@@ -405,6 +397,8 @@ cold_gamma_table<-font(cold_gamma_table, fontname = "Times")
 cold_gamma_table <- add_header_lines(cold_gamma_table, values = "Cold season")
 save_as_image(cold_gamma_table, path = "cold_gamma_table.png")
 cold_gamma_table
+
+
 
 #Let's do the same for the warm season 
 
@@ -439,8 +433,8 @@ warm_gamma_table
 
 ```{r bootstrap setup_2}
 
-# set seed for reproducability 
-set.seed(10)
+# set seed for reproducibility 
+set.seed(7)
 
 ### Setup the bootstrap function and number of iterations
 
@@ -453,9 +447,9 @@ bootFUN <- function(model, newdata) {
     nr <- nrow(model$data) # count number of rows in the model (# of observations)
     data <- model$data # pull data from model
   }
-  data2 <- data[sample(1:nr, size = nr, replace = TRUE), ] # random sample of numbers from 1 - nr (# of rows) to select data from
+  data2 <- data.frame(data[sample(1:nr, replace = TRUE), ]) # random sample of numbers from 1 - nr (# of rows) to select data from
   update <- update(model, data = data2) # rerun the model using the 'new' dataset from the random smapling above
-  predict(update, newdata = newdata, type = "response", allow.new.levels=TRUE) # predicts response variable with model and updated data 
+  predict(update, newdata, type = "response", re.form = NA, allow.new.levels=TRUE) # predicts response variable with model and updated data 
 }
 
 bootnum <- 1500 # this is the number of bootstrap replicates. I set it to 1500 here but we should select a number between 999 and 9999
@@ -465,10 +459,14 @@ bootnum <- 1500 # this is the number of bootstrap replicates. I set it to 1500 h
 ### Warm Season
 ```{r warm season bootstraping}
 
+# need to remove fish exclusion here before running model
+AlgaeWeight_Warm2020_fishRM <- AlgaeWeight_Warm2020 %>%
+  filter(Treatment %in% c("Open Cages", "Full exclusion")) %>% 
+  droplevels()
+
+
 ## Warm season GLM (I removed the +0.01 since you do not have any 0s here)
-
-
-warm_glm <- glm(Sample.weight.postburn..g. ~ Treatment * N, family = Gamma(link = "log"), data = AlgaeWeight_Warm2020)
+warm_glm <- glm(AFDW..g...preburn..postburn. ~ Treatment * N, family = Gamma(link = "log"), data = AlgaeWeight_Warm2020)
 
 ## Run parametric bootstrapping:
 newdata <- data.frame(Treatment = AlgaeWeight_Warm2020$Treatment, N = AlgaeWeight_Warm2020$N) # creates dataframe of predictor variables (here, Treatment and N)
@@ -476,7 +474,7 @@ boot <- replicate(bootnum, bootFUN(model = warm_glm, newdata = newdata)) # run t
 
 # Calculate the mean, 95% lowerCI, and 95% upperCI from the boot matrix and add it to dataframe (but as a new name)
 AlgaeWeight_Warm2020_boot <- cbind(AlgaeWeight_Warm2020, as.data.frame(t(apply(boot, 1, function(x) c(mean(x), quantile(x, c(0.025, 0.975)))))))
-colnames(AlgaeWeight_Warm2020_boot)[12:14] <- c("mean", "lowerci", "upperci") # rename mean/CI columns
+colnames(AlgaeWeight_Warm2020_boot)[13:15] <- c("mean", "lowerci", "upperci") # rename mean/CI columns
 
 ```
 
@@ -484,23 +482,22 @@ colnames(AlgaeWeight_Warm2020_boot)[12:14] <- c("mean", "lowerci", "upperci") # 
 
 colour.palette <- c("#999999", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-#I included this to remove the urching access treatment. 
-
-AlgaeWeight_Warm2020_boot_NU<-AlgaeWeight_Warm2020_boot %>%
-  filter(Treatment %in% c("Open Cages", "Full exclusion"))
+AlgaeWeight_Warm2020_boot_fishRM <- AlgaeWeight_Warm2020_boot %>%
+  filter(Treatment %in% c("Open Cages", "Full exclusion")) %>% 
+  droplevels()
 
 ### Plot the observational values and bootstrapped mean/CI
 warm_boot_plot <- ggplot() +
-  theme_bw() + # sets plot theme (removes gridlines, etc.)
-  theme(panel.grid.major=element_blank(), panel.grid.minor=element_blank(), strip.text.x = element_blank(), panel.background=element_blank(), axis.line=element_line(color="black"), legend.key=element_blank(), strip.background = element_blank(), legend.position="none", panel.border = element_rect(colour = "black", size= 0.8))+
-  geom_point(data = AlgaeWeight_Warm2020_boot_NU, aes(x = N , y = Sample.weight.postburn..g., colour = Treatment), shape = 1, alpha = 0.4, position = position_jitterdodge(jitter.width = NULL, jitter.height = 0,dodge.width = 0.85)) +
-  geom_linerange(data = AlgaeWeight_Warm2020_boot_NU, aes(x = N, ymin = lowerci, ymax = upperci, colour = Treatment), alpha = 0.1, size = 8, position = position_dodge(width = 0.85)) +
-  geom_point(data = AlgaeWeight_Warm2020_boot_NU, aes(x = N, y = mean, colour = Treatment), shape = "-", size = 20, position = position_dodge(width = 0.85)) + # plots the mean value 
+  theme_bw() +
+  theme(panel.grid = element_blank(), panel.background=element_blank(), legend.key=element_blank(), strip.background = element_blank())+
+  geom_point(data = AlgaeWeight_Warm2020_boot_fishRM, aes(x = N , y = AFDW..g...preburn..postburn., colour = Treatment), shape = 1, alpha = 0.4, position = position_jitterdodge(jitter.width = NULL, jitter.height = 0, dodge.width = 0.85)) +
+  geom_linerange(data = AlgaeWeight_Warm2020_boot_fishRM, aes(x = N, ymin = lowerci, ymax = upperci, colour = Treatment), alpha = 0.1, size = 8, position = position_dodge(width = 0.85)) +
+  geom_point(data = AlgaeWeight_Warm2020_boot_fishRM, aes(x = N, y = mean, colour = Treatment), shape = "-", size = 20, position = position_dodge(width = 0.85)) + # plots the mean value 
   scale_colour_manual(name = "", values = colour.palette) + # adds the colours for plotting
   ylab("Dry algae weight (g)") + # y-axis label
   xlab("") +
   ggtitle("Warm Season") +
-  scale_y_continuous(expand=c(0,0), breaks=seq(0, 15, 1), limits = c(0, 15)) + # makes the y-axis display as $
+  scale_y_continuous(expand=c(0,0), breaks=seq(0, 15, 1), limits = c(0, 100)) + # makes the y-axis display as $
   theme(axis.text.x = element_text(size = 9.5), axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5), legend.position = "bottom", legend.text = element_text(size = 8), legend.key.size = unit(0.4, "cm"), legend.key.height = unit(0.4, "cm")) + #Legend theme
   guides(colour = guide_legend(override.aes = list(shape = 15, size=3)))
 
@@ -511,7 +508,7 @@ warm_boot_plot <- ggplot() +
 
 ## Cold season GLM (I removed the +0.01 since you do not have any 0s here)
 
-cold_glm <- glm(Sample.weight.postburn..g. ~ Treatment * N, family = Gamma(link = "log"), data = AlgaeWeight_Cold2019)
+cold_glm <- glm(AFDW..g...preburn..postburn. ~ Treatment * N, family = Gamma(link = "log"), data = AlgaeWeight_Cold2019)
 
 ## Run parametric bootstrapping:
 newdata <- data.frame(Treatment = AlgaeWeight_Cold2019$Treatment, N = AlgaeWeight_Cold2019$N) # creates dataframe of predictor variables (here, Treatment and N)
@@ -533,7 +530,7 @@ colour.palette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#007
 cold_boot_plot <- ggplot() +
   theme_bw() + # sets plot theme (removes gridlines, etc.)
   theme(panel.grid.major=element_blank(), panel.grid.minor=element_blank(), strip.text.x = element_blank(), panel.background=element_blank(), axis.line=element_line(color="black"), legend.key=element_blank(), strip.background = element_blank(), legend.position="none", panel.border = element_rect(colour = "black", size= 0.8))+
-  geom_point(data = AlgaeWeight_Cold2019_boot, aes(x = N , y = Sample.weight.postburn..g., colour = Treatment), shape = 1, alpha = 0.4, position = position_jitterdodge(jitter.width = NULL, jitter.height = 0,dodge.width = 0.85)) +
+  geom_point(data = AlgaeWeight_Cold2019_boot, aes(x = N , y = AFDW..g...preburn..postburn., colour = Treatment), shape = 1, alpha = 0.4, position = position_jitterdodge(jitter.width = NULL, jitter.height = 0,dodge.width = 0.85)) +
   geom_linerange(data = AlgaeWeight_Cold2019_boot, aes(x = N, ymin = lowerci, ymax = upperci, colour = Treatment), alpha = 0.1, size = 8, position = position_dodge(width = 0.85)) +
   geom_point(data = AlgaeWeight_Cold2019_boot, aes(x = N, y = mean, colour = Treatment), shape = "-", size = 20, position = position_dodge(width = 0.85)) + # plots the mean value 
   scale_colour_manual(name = "", values = colour.palette) + # adds the colours for plotting
@@ -579,13 +576,13 @@ dev.off()
 ```{r}
 mean_AlgaeWeight_Cold2019_boot<-AlgaeWeight_Cold2019_boot%>%
   group_by(Treatment, N)%>%
-  summarise(mean_weight=mean(Sample.weight.postburn..g.), mean_BS=mean(mean), lowerc=mean(lowerci), upperci=mean(upperci))
+  summarise(mean_weight=mean(AFDW..g...preburn..postburn.), mean_BS=mean(mean), lowerc=mean(lowerci), upperci=mean(upperci))
 
 mean_AlgaeWeight_Cold2019_boot<-as.data.frame(mean_AlgaeWeight_Cold2019_boot)
 
 mean_AlgaeWeight_Warm2020_boot<-AlgaeWeight_Warm2020_boot%>%
   group_by(Treatment, N)%>%
-  summarise(mean_weight=mean(Sample.weight.postburn..g.), mean_BS=mean(mean), lowerc=mean(lowerci), upperci=mean(upperci))
+  summarise(mean_weight=mean(AFDW..g...preburn..postburn.), mean_BS=mean(mean), lowerc=mean(lowerci), upperci=mean(upperci))
 
 mean_AlgaeWeight_Warm2020_boot<-as.data.frame(mean_AlgaeWeight_Warm2020_boot)
 
@@ -716,7 +713,6 @@ AlgaeCover_BothSeason_Boot
 ```
 
 
-<<<<<<< HEAD
 ## Suplementary information 
 
 ```{r}
@@ -728,7 +724,7 @@ AlgaeWeight_Warm2020_boot<-AlgaeWeight_Warm2020_boot %>% filter(Treatment %in% c
 Warm_ControlProcedure <- ggplot() +
   theme_bw() + # sets plot theme (removes gridlines, etc.)
   theme(panel.grid.major=element_blank(), panel.grid.minor=element_blank(), strip.text.x = element_blank(), panel.background=element_blank(), axis.line=element_line(color="black"), legend.key=element_blank(), strip.background = element_blank(), legend.position="none", panel.border = element_rect(colour = "black", size= 0.8))+
-  geom_point(data = AlgaeWeight_Warm2020_boot, aes(x = N , y = Sample.weight.postburn..g., colour = Treatment), shape = 1, alpha = 0.4, position = position_jitterdodge(jitter.width = NULL, jitter.height = 0,dodge.width = 0.85)) +
+  geom_point(data = AlgaeWeight_Warm2020_boot, aes(x = N , y = AFDW..g...preburn..postburn., colour = Treatment), shape = 1, alpha = 0.4, position = position_jitterdodge(jitter.width = NULL, jitter.height = 0,dodge.width = 0.85)) +
   geom_linerange(data = AlgaeWeight_Warm2020_boot, aes(x = N, ymin = lowerci, ymax = upperci, colour = Treatment), alpha = 0.1, size = 8, position = position_dodge(width = 0.85)) +
   geom_point(data = AlgaeWeight_Warm2020_boot, aes(x = N, y = mean, colour = Treatment), shape = "-", size = 20, position = position_dodge(width = 0.85)) + # plots the mean value 
   scale_colour_manual(name = "", values = colour.palette) + # adds the colours for plotting
@@ -746,7 +742,6 @@ dev.off()
 Warm_ControlProcedure
 ```
 
-=======
 ### Session Information from last compile run:
 `r format(Sys.time(), '%d %B %Y')`
 
@@ -755,4 +750,3 @@ Warm_ControlProcedure
 sessionInfo()
 
 ```
->>>>>>> 3537efe963c824661a04076f25751f60d25af297
