@@ -456,7 +456,7 @@ bootFUN <- function(model, newdata) {
   }
   data2 <- data.frame(data[sample(1:nr, replace = TRUE), ]) # random sample of numbers from 1 - nr (# of rows) to select data from
   update <- update(model, data = data2) # rerun the model using the 'new' dataset from the random smapling above
-  predict(update, newdata, type = "response") # predicts response variable with model and updated data 
+  predict(update, newdata, type = "response", level = 0.95) # predicts response variable with model and updated data 
 }
 
 bootnum <- 1000 # this is the number of bootstrap replicates. I set it to 1500 here but we should select a number between 999 and 9999
@@ -474,8 +474,8 @@ newdata <- data.frame(Treatment = AlgaeWeight_Warm2020_fishRM$Treatment, N = Alg
 boot <- replicate(bootnum, bootFUN(model = warm_glm, newdata = newdata)) # run the bootFUN the number (bootnum) of times specified and save as matrix
 
 # Calculate the mean, 95% lowerCI, and 95% upperCI from the boot matrix and add it to dataframe (but as a new name)
-AlgaeWeight_Warm2020_boot <- cbind(AlgaeWeight_Warm2020_fishRM, as.data.frame(t(apply(boot, 1, function(x) c(mean(x), quantile(x, c(0.025, 0.975)))))))
-colnames(AlgaeWeight_Warm2020_boot)[13:15] <- c("mean", "lowerci", "upperci") # rename mean/CI columns
+AlgaeWeight_Warm2020_boot <- cbind(AlgaeWeight_Warm2020_fishRM, as.data.frame(t(apply(boot, 1, function(x) c(quantile(x, c(0.025, 0.5, 0.975)))))))
+colnames(AlgaeWeight_Warm2020_boot)[13:15] <- c("lowerci", "mean", "upperci") # rename mean/CI columns
 
 ```
 
@@ -518,8 +518,10 @@ newdata <- data.frame(Treatment = AlgaeWeight_Cold2019$Treatment, N = AlgaeWeigh
 boot <- replicate(bootnum, bootFUN(model = cold_glm, newdata = newdata)) # run the bootFUN the number (bootnum) of times specified and save as matrix
 
 # Calculate the mean, 95% lowerCI, and 95% upperCI from the boot matrix and add it to dataframe (but as a new name)
-AlgaeWeight_Cold2019_boot <- cbind(AlgaeWeight_Cold2019, as.data.frame(t(apply(boot, 1, function(x) c(mean(x), quantile(x, c(0.025, 0.975)))))))
-colnames(AlgaeWeight_Cold2019_boot)[13:15] <- c("mean", "lowerci", "upperci") # rename mean/CI columns
+#AlgaeWeight_Cold2019_boot <- cbind(AlgaeWeight_Cold2019, as.data.frame(t(apply(boot, 1, function(x) c(quantile(x, c(0.025, 0.5, 0.975)))))))]
+#colnames(AlgaeWeight_Cold2019_boot)[13:15] <- c("lowerci", "mean", "upperci") # rename mean/CI columns
+AlgaeWeight_Cold2019_boot <- cbind(AlgaeWeight_Cold2019, as.data.frame(t(apply(boot, 1, function(x) c(quantile(x, c(0.025, 0.5, 0.975)))))))
+colnames(AlgaeWeight_Cold2019_boot)[13:15] <- c("lowerci", "mean", "upperci") # rename mean/CI columns
 
 ```
 
@@ -635,8 +637,8 @@ newdata <- data.frame(Treatment = cold_2019_update$Treatment, Week = cold_2019_u
 boot_cover <- replicate(bootnum, bootFUN(model = cold_cover_glm, newdata = newdata)) # run the bootFUN the number (bootnum) of times specified and save as matrix
 
 # Calculate the mean, 95% lowerCI, and 95% upperCI from the boot_cover matrix and add it to dataframe (but as a new name)
-cold_2019_boot <- cbind(cold_2019_update, as.data.frame(t(apply(boot_cover, 1, function(x) c(mean(x), quantile(x, c(0.025, 0.975)))))))
-colnames(cold_2019_boot)[21:23] <- c("mean", "lowerci", "upperci") # rename mean/CI columns
+cold_2019_boot <- cbind(cold_2019_update, as.data.frame(t(apply(boot_cover, 1, function(x) c(quantile(x, c(0.025, 0.5, 0.975)))))))
+colnames(cold_2019_boot)[21:23] <- c("lowerci", "mean", "upperci") # rename mean/CI columns
 
 ```
 
@@ -659,10 +661,7 @@ Algae_CoverCoolSeason_boot <- ggplot(cold_2019_boot, aes(x=Week, y=mean, colour=
 ``` {r save cool cover plot}
 
 Algae_CoverCoolSeason_boot
-
-png("Algae_CoverCoolSeason_boot.png", width=14, height=8, units="cm", res=300)
-print(Algae_CoverCoolSeason_boot)
-dev.off()
+ggsave("Algae_CoverCoolSeason_boot.png", width = 22, height = 10, units = "cm", dpi = 300)
 
 ```
 
@@ -681,8 +680,8 @@ newdata <- data.frame(Treatment = warm_2020_update$Treatment, Week = warm_2020_u
 boot_cover2 <- replicate(1500, bootFUN(model = warm_cover_glm, newdata = newdata)) # run the bootFUN the number (bootnum) of times specified and save as matrix
 
 # Calculate the mean, 95% lowerCI, and 95% upperCI from the boot_cover matrix and add it to dataframe (but as a new name)
-warm_2020_boot <- cbind(warm_2020_update, as.data.frame(t(apply(boot_cover2, 1, function(x) c(mean(x), quantile(x, c(0.025, 0.975)))))))
-colnames(warm_2020_boot)[19:21] <- c("mean", "lowerci", "upperci") # rename mean/CI columns
+warm_2020_boot <- cbind(warm_2020_update, as.data.frame(t(apply(boot_cover2, 1, function(x) c(quantile(x, c(0.025, 0.5, 0.975)))))))
+colnames(warm_2020_boot)[19:21] <- c("lowerci", "mean", "upperci") # rename mean/CI columns
 
 ```
 
@@ -707,51 +706,78 @@ Algae_CoverwarmSeason_boot <- ggplot(warm_2020_boot, aes(x=Week, y=mean, colour=
 ``` {r save warm cover plot}
 
 Algae_CoverwarmSeason_boot
-
-png("AlgaeCover_WarmSeason_boot.png", width=14, height=8, units="cm", res=300)
-print(Algae_CoverwarmSeason_boot)
-dev.off()
+ggsave("AlgaeCover_WarmSeason_boot.png", width = 22, height = 10, units = "cm", dpi = 300)
 
 ```
 
 ```{r}
-AlgaeCover_BothSeason_Boot<-ggarrange(Algae_CoverCoolSeason_boot, Algae_CoverwarmSeason_boot, nrow=2, common.legend = TRUE, labels = c("A", "B"), hjust = -0.1, vjust = 1.5, legend="bottom")
-
-png("ComparationAlgaeCover_boot.png", width=14, height=8, units="cm", res=300)
-print(AlgaeCover_BothSeason_Boot)
-dev.off()
+AlgaeCover_BothSeason_Boot <- ggarrange(Algae_CoverCoolSeason_boot, Algae_CoverwarmSeason_boot, nrow=2, common.legend = TRUE, labels = c("A", "B"), hjust = -0.1, vjust = 1.5, legend="bottom") + 
+  theme(plot.background = element_rect(fill = "white", colour = NA))
 
 AlgaeCover_BothSeason_Boot
+ggsave("ComparationAlgaeCover_boot.png", width = 20, height = 20, units = "cm", dpi = 300)
+
 ```
 
 
 ## Suplementary information 
 
-```{r}
+### Procedural Control of warm season
+```{r warm season bootstraping}
 
-#Comparing control open cage with procedural control 
+# need to remove Fish exclusions here before running model
+AlgaeWeight_Warm2020_control <- AlgaeWeight_Warm2020 %>%
+  filter(Treatment %in% c("Open pizzas", "Fish exclusions")) %>% 
+  droplevels()
 
-AlgaeWeight_Warm2020_boot<-AlgaeWeight_Warm2020_boot %>% filter(Treatment %in% c("Open pizzas", "Procedural Control")) 
+levels(AlgaeWeight_Warm2020_control$Treatment) <- c("Open pizzas" = "Open pizzas", "Fish exclusions" = "Procedural controls")
 
-Warm_ControlProcedure <- ggplot() +
-  theme_bw() + # sets plot theme (removes gridlines, etc.)
-  theme(panel.grid.major=element_blank(), panel.grid.minor=element_blank(), strip.text.x = element_blank(), panel.background=element_blank(), axis.line=element_line(color="black"), legend.key=element_blank(), strip.background = element_blank(), legend.position="none", panel.border = element_rect(colour = "black", size= 0.8))+
-  geom_point(data = AlgaeWeight_Warm2020_boot, aes(x = N , y = AFDW..g...preburn..postburn., colour = Treatment), shape = 1, alpha = 0.4, position = position_jitterdodge(jitter.width = NULL, jitter.height = 0,dodge.width = 0.85)) +
-  geom_linerange(data = AlgaeWeight_Warm2020_boot, aes(x = N, ymin = lowerci, ymax = upperci, colour = Treatment), alpha = 0.1, size = 8, position = position_dodge(width = 0.85)) +
-  geom_point(data = AlgaeWeight_Warm2020_boot, aes(x = N, y = mean, colour = Treatment), shape = "-", size = 20, position = position_dodge(width = 0.85)) + # plots the mean value 
+
+
+## Warm season GLM (I removed the +0.01 since you do not have any 0s here)
+warm_control_glm <- glm(AFDW..g...preburn..postburn. ~ Treatment * N, family = Gamma(link = "log"), data = AlgaeWeight_Warm2020_control)
+
+## Run parametric bootstrapping:
+newdata <- data.frame(Treatment = AlgaeWeight_Warm2020_control$Treatment, N = AlgaeWeight_Warm2020_control$N) # creates dataframe of predictor variables (here, Treatment and N)
+boot <- replicate(bootnum, bootFUN(model = warm_control_glm, newdata = newdata)) # run the bootFUN the number (bootnum) of times specified and save as matrix
+
+# Calculate the mean, 95% lowerCI, and 95% upperCI from the boot matrix and add it to dataframe (but as a new name)
+#AlgaeWeight_Warm2020_control_boot <- cbind(AlgaeWeight_Warm2020_control, as.data.frame(t(apply(boot, 1, function(x) c(quantile(x, c(0.025, 0.5, 0.975)))))))
+#colnames(AlgaeWeight_Warm2020_control_boot)[13:15] <- c("lowerci", "mean", "upperci") # rename mean/CI columns
+
+AlgaeWeight_Warm2020_control_boot <- cbind(AlgaeWeight_Warm2020_control, as.data.frame(t(apply(boot, 1, function(x) c(quantile(x, c(0.025, 0.5, 0.975)))))))
+colnames(AlgaeWeight_Warm2020_control_boot)[13:15] <- c("lowerci", "mean", "upperci") # rename mean/CI columns
+
+
+```
+
+```{r warm season boot plot}
+
+colour.palette <- c("#999999", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+levels(AlgaeWeight_Warm2020_control_boot$N) <- c("No N" = "Ambient nutrients", "N+" = "Nutrient additions")
+
+### Plot the observational values and bootstrapped mean/CI
+warm_control_boot_plot <- ggplot() +
+  geom_point(data = AlgaeWeight_Warm2020_control_boot, aes(x = N , y = AFDW..g...preburn..postburn., colour = Treatment), shape = 1, alpha = 0.4, position = position_jitterdodge(jitter.width = NULL, jitter.height = 0, dodge.width = 0.85)) +
+  geom_linerange(data = AlgaeWeight_Warm2020_control_boot, aes(x = N, ymin = lowerci, ymax = upperci, colour = Treatment), alpha = 0.1, size = 8, position = position_dodge(width = 0.85)) +
+  geom_point(data = AlgaeWeight_Warm2020_control_boot, aes(x = N, y = mean, colour = Treatment), shape = "-", size = 20, position = position_dodge(width = 0.85)) + # plots the mean value 
+  theme_bw() +
+  theme(panel.grid = element_blank(), panel.background=element_blank(), legend.key=element_blank(), strip.background = element_blank())+
   scale_colour_manual(name = "", values = colour.palette) + # adds the colours for plotting
-  ylab("Dry algae weight (g)") + # y-axis label
+  #scale_y_continuous(expand=c(0,0), limits = c(-3, 120)) + # makes the y-axis display as $
+  theme(axis.text.x = element_text(size = 9.5), axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5), legend.position = "bottom", legend.text = element_text(size = 8), legend.key.size = unit(0.4, "cm"), legend.key.height = unit(0.4, "cm")) + #Legend theme
+  guides(colour = guide_legend(override.aes = list(shape = 15, size=3))) +
+  ylab("AFDW (g)") + # y-axis label
   xlab("") +
-  ggtitle("Warm Season") +
-  scale_y_continuous(expand=c(0,0), breaks=seq(0, 7, 1), limits = c(0, 8)) + # makes the y-axis display as $
-  theme(axis.text.x = element_text(size = 9.5), axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5), legend.position = "bottom", legend.text = element_text(size = 10), legend.key.size = unit(0.5, "cm"), legend.key.height = unit(0.5, "cm")) + #Legend theme
-  guides(colour = guide_legend(override.aes = list(shape = 15, size=3)))
+  ggtitle("Warm Season") 
 
-png("WarmProceduralControl.png", width=8, height=10, units="cm", res=300)
-print(Warm_ControlProcedure)
-dev.off()
+```
 
-Warm_ControlProcedure
+
+```{r}
+warm_control_boot_plot
+ggsave("WarmProceduralControl.png", width = 14, height = 12, units = "cm", dpi = 300)
 ```
 
 ### Session Information from last compile run:
