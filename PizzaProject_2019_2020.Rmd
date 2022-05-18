@@ -22,8 +22,6 @@ library(kableExtra)
 library(flextable)
 library(reshape2)
 #library(xlsx)
-
-# Colleen added this one
 library(cowplot)
 library(performance)
 library(MASS)
@@ -76,7 +74,7 @@ Algae_CoverColdSeason <- ggplot(cold_2019_average, aes(x=Week, y=mean, colour=Tr
 ### Plotting_COLD
 ```{r, fig.height=5, fig.width=10}
 Algae_CoverColdSeason
-ggsave("AlgaeCover_ColdSeason.png", width = 20, height = 10, units = "cm", dpi = 300)
+#ggsave("AlgaeCover_ColdSeason.png", width = 20, height = 10, units = "cm", dpi = 300)
 ```
 Figure 1: Effect of herbivore exclussion and Nutrient additions on weekly algae cover during cold season. 
 
@@ -118,7 +116,7 @@ AlgaeCover_HotSeason <- ggplot(warm_2020_average, aes(x=Week, y=mean, colour=Tre
 
 ```{r, fig.height=5, fig.width=10}
 AlgaeCover_HotSeason
-ggsave("AlgaeCover_HotSeason.png", width = 18, height = 10, units = "cm", dpi = 300)
+#ggsave("AlgaeCover_HotSeason.png", width = 18, height = 10, units = "cm", dpi = 300)
 ```
 Figure 2: Effect of herbivore exclussion and Nutrient additions on algae cover during warm season. 
 
@@ -127,7 +125,7 @@ Figure 2: Effect of herbivore exclussion and Nutrient additions on algae cover d
 ```{r}
 Cover_BothSeason <- ggarrange(Algae_CoverColdSeason, AlgaeCover_HotSeason, nrow=2, common.legend = TRUE, labels = c("A", "B"), hjust = -0.1, vjust = 1.5, legend="bottom") + 
   theme(plot.background = element_rect(fill = "white", colour = NA))
-ggsave("Cover_BothSeason.png", width = 18, height = 17, units = "cm", dpi = 300)
+#ggsave("Cover_BothSeason.png", width = 18, height = 17, units = "cm", dpi = 300)
 
 ```
 
@@ -312,7 +310,7 @@ Algae_weight <- ggarrange(P1, P2, nrow=1, common.legend = TRUE, labels = c("Cold
   theme(plot.background = element_rect(fill = "white", colour = NA))
 Algae_weight
 
-ggsave("AlgaeWeights_se.png", width = 22, height = 10, units = "cm", dpi = 300)
+#ggsave("AlgaeWeights_se.png", width = 22, height = 10, units = "cm", dpi = 300)
 ```
 
 
@@ -557,7 +555,7 @@ AlgaeWeight_bootCI <- ggarrange(cold_boot_plot, warm_boot_plot, nrow = 1, labels
   theme(plot.background = element_rect(fill = "white", colour = NA))
 AlgaeWeight_bootCI
 
-ggsave("AlgaeWeight_bootCI.png", width = 22, height = 10, units = "cm", dpi = 300)
+ggsave("Figure4_AlgaeWeight_bootCI.png", width = 22, height = 10, units = "cm", dpi = 300)
 
 ```
 
@@ -619,110 +617,10 @@ saveWorkbook(wb, file="StatTables.xlsx", overwrite = TRUE)
 
 ```
 
-## Colleen's Bootstrapping of % algal cover
-
-### Cool season
-```{r run cool season % cover boot}
-
-cold_2019_update <- cold_2019 %>% 
-  filter(Treatment!= "Fish access") # remove fish treatment
-
-
-## Cold season GLM for algal cover
-cold_cover_glm <- glm(Algae ~ Treatment * Week + N, quasipoisson(link = "sqrt"), data = cold_2019_update)
-summary(cold_cover_glm)
-
-## Run parametric bootstrapping:
-newdata <- data.frame(Treatment = cold_2019_update$Treatment, Week = cold_2019_update$Week, N = cold_2019_update$N) # creates dataframe of predictor variables (here, Treatment and N)
-boot_cover <- replicate(bootnum, bootFUN(model = cold_cover_glm, newdata = newdata)) # run the bootFUN the number (bootnum) of times specified and save as matrix
-
-# Calculate the mean, 95% lowerCI, and 95% upperCI from the boot_cover matrix and add it to dataframe (but as a new name)
-cold_2019_boot <- cbind(cold_2019_update, as.data.frame(t(apply(boot_cover, 1, function(x) c(quantile(x, c(0.025, 0.5, 0.975)))))))
-colnames(cold_2019_boot)[21:23] <- c("lowerci", "mean", "upperci") # rename mean/CI columns
-
-```
-
-```{r plot cool season % cover boot, echo=FALSE}
-
-# Plot cool season percent algal cover
-Algae_CoverCoolSeason_boot <- ggplot(cold_2019_boot, aes(x=Week, y=mean, colour=Treatment, group=Treatment)) + 
-  geom_errorbar(aes(ymin=lowerci, ymax=upperci), width=.8, position=position_dodge(width=0.4), linetype="dotted", size=.4)+
-  geom_line(position=position_dodge(width=0.4)) +
-  geom_point(size = 2, position=position_dodge(width=0.4))+ 
-  facet_wrap(~N, nrow=1) +
-  theme_bw()+
-  theme(legend.position = "bottom")+ 
-  theme(panel.grid.major = element_blank(), panel.grid.minor=element_blank())+
-  labs(y="Mean algae cover (%)", x="Sampling week")+
-  scale_color_manual(values=colour.palette)
-
-```
-
-``` {r save cool cover plot}
-
-Algae_CoverCoolSeason_boot
-ggsave("Algae_CoverCoolSeason_boot.png", width = 22, height = 10, units = "cm", dpi = 300)
-
-```
-
-### Warm season
-
-```{r run warm season % cover boot}
-
-warm_2020_update <- warm_2020
-
-## Warm season GLM for algal cover
-warm_cover_glm <- glm(Algae ~ Treatment + Week + N, family = quasipoisson(link = "sqrt"), data = warm_2020_update)
-summary(warm_cover_glm)
-
-## Run parametric bootstrapping:
-newdata <- data.frame(Treatment = warm_2020_update$Treatment, Week = warm_2020_update$Week, N = warm_2020_update$N) # creates dataframe of predictor variables (here, Treatment and N)
-boot_cover2 <- replicate(1500, bootFUN(model = warm_cover_glm, newdata = newdata)) # run the bootFUN the number (bootnum) of times specified and save as matrix
-
-# Calculate the mean, 95% lowerCI, and 95% upperCI from the boot_cover matrix and add it to dataframe (but as a new name)
-warm_2020_boot <- cbind(warm_2020_update, as.data.frame(t(apply(boot_cover2, 1, function(x) c(quantile(x, c(0.025, 0.5, 0.975)))))))
-colnames(warm_2020_boot)[19:21] <- c("lowerci", "mean", "upperci") # rename mean/CI columns
-
-```
-
-
-```{r plot warm season % cover boot, echo=FALSE}
-
-AlgaeWeight_Warm2020_boot_NU<-AlgaeWeight_Warm2020_boot %>%
-  filter(Treatment %in% c("Open pizzas", "Full exclusions"))
-
-
-# Plot warm season percent algal cover
-Algae_CoverwarmSeason_boot <- ggplot(warm_2020_boot, aes(x=Week, y=mean, colour=Treatment, group=Treatment)) + 
-  geom_errorbar(aes(ymin=lowerci, ymax=upperci), width=.8, position=position_dodge(width=0.4), linetype="dotted", size=.4)+
-  geom_line(position=position_dodge(width=0.4)) +
-  geom_point(size = 2, position=position_dodge(width=0.4))+ 
-  facet_wrap(~N, nrow=1) +theme_bw()+theme(legend.position = "bottom")+ theme(panel.grid.major = element_blank(), panel.grid.minor=element_blank())+
-  labs(y="Mean algae cover (%)", x="Sampling week")+
-  scale_color_manual(values=colour.palette)
-
-```
-
-``` {r save warm cover plot}
-
-Algae_CoverwarmSeason_boot
-ggsave("AlgaeCover_WarmSeason_boot.png", width = 22, height = 10, units = "cm", dpi = 300)
-
-```
-
-```{r}
-AlgaeCover_BothSeason_Boot <- ggarrange(Algae_CoverCoolSeason_boot, Algae_CoverwarmSeason_boot, nrow=2, common.legend = TRUE, labels = c("A", "B"), hjust = -0.1, vjust = 1.5, legend="bottom") + 
-  theme(plot.background = element_rect(fill = "white", colour = NA))
-
-AlgaeCover_BothSeason_Boot
-ggsave("ComparationAlgaeCover_boot.png", width = 20, height = 20, units = "cm", dpi = 300)
-
-```
-
 
 ## Suplementary information 
 
-### Procedural Control of warm season
+### Procedural Control of warm season (Figure S2)
 ```{r procedural control bootstraping}
 
 # need to remove Fish exclusions here before running model
@@ -774,13 +672,196 @@ warm_control_boot_plot <- ggplot() +
 
 ```
 
-
 ```{r}
 warm_control_boot_plot
-ggsave("WarmProceduralControl.png", width = 14, height = 12, units = "cm", dpi = 300)
+ggsave("FigureS2_WarmProceduralControl.png", width = 14, height = 12, units = "cm", dpi = 300)
 ```
 
-### Session Information from last compile run:
+
+### Percent Algal Cover (Figure S3)
+```{r run cool season % cover boot}
+
+cold_2019_update <- cold_2019 %>% 
+  filter(Treatment!= "Fish access") # remove fish treatment
+
+
+## Cold season GLM for algal cover
+cold_cover_glm <- glm(Algae ~ Treatment * Week + N, quasipoisson(link = "sqrt"), data = cold_2019_update)
+summary(cold_cover_glm)
+
+## Run parametric bootstrapping:
+newdata <- data.frame(Treatment = cold_2019_update$Treatment, Week = cold_2019_update$Week, N = cold_2019_update$N) # creates dataframe of predictor variables (here, Treatment and N)
+boot_cover <- replicate(bootnum, bootFUN(model = cold_cover_glm, newdata = newdata)) # run the bootFUN the number (bootnum) of times specified and save as matrix
+
+# Calculate the mean, 95% lowerCI, and 95% upperCI from the boot_cover matrix and add it to dataframe (but as a new name)
+cold_2019_boot <- cbind(cold_2019_update, as.data.frame(t(apply(boot_cover, 1, function(x) c(quantile(x, c(0.025, 0.5, 0.975)))))))
+colnames(cold_2019_boot)[21:23] <- c("lowerci", "mean", "upperci") # rename mean/CI columns
+
+```
+
+```{r plot cool season % cover boot, echo=FALSE}
+
+colour.palette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+# Plot cool season percent algal cover
+Algae_CoverCoolSeason_boot <- ggplot(cold_2019_boot, aes(x=Week, y=mean, colour=Treatment, group=Treatment)) + 
+  geom_errorbar(aes(ymin=lowerci, ymax=upperci), width=.8, position=position_dodge(width=0.4), linetype="dotted", size=.4)+
+  geom_line(position=position_dodge(width=0.4)) +
+  geom_point(size = 2, position=position_dodge(width=0.4))+ 
+  facet_wrap(~N, nrow=1) +
+  theme_bw()+
+  theme(legend.position = "bottom")+ 
+  theme(panel.grid.major = element_blank(), panel.grid.minor=element_blank())+
+  labs(y="Mean algae cover (%)", x="Sampling week")+
+  scale_color_manual(values=colour.palette)
+
+
+Algae_CoverCoolSeason_boot
+#ggsave("Algae_CoverCoolSeason_boot.png", width = 22, height = 10, units = "cm", dpi = 300)
+
+```
+
+
+```{r run warm season % cover boot}
+
+warm_2020_update <- warm_2020
+
+## Warm season GLM for algal cover
+warm_cover_glm <- glm(Algae ~ Treatment + Week + N, family = quasipoisson(link = "sqrt"), data = warm_2020_update)
+summary(warm_cover_glm)
+
+## Run parametric bootstrapping:
+newdata <- data.frame(Treatment = warm_2020_update$Treatment, Week = warm_2020_update$Week, N = warm_2020_update$N) # creates dataframe of predictor variables (here, Treatment and N)
+boot_cover2 <- replicate(1500, bootFUN(model = warm_cover_glm, newdata = newdata)) # run the bootFUN the number (bootnum) of times specified and save as matrix
+
+# Calculate the mean, 95% lowerCI, and 95% upperCI from the boot_cover matrix and add it to dataframe (but as a new name)
+warm_2020_boot <- cbind(warm_2020_update, as.data.frame(t(apply(boot_cover2, 1, function(x) c(quantile(x, c(0.025, 0.5, 0.975)))))))
+colnames(warm_2020_boot)[19:21] <- c("lowerci", "mean", "upperci") # rename mean/CI columns
+
+```
+
+```{r plot warm season % cover boot, echo=FALSE}
+
+AlgaeWeight_Warm2020_boot_NU<-AlgaeWeight_Warm2020_boot %>%
+  filter(Treatment %in% c("Open pizzas", "Full exclusions"))
+
+
+# Plot warm season percent algal cover
+Algae_CoverwarmSeason_boot <- ggplot(warm_2020_boot, aes(x=Week, y=mean, colour=Treatment, group=Treatment)) + 
+  geom_errorbar(aes(ymin=lowerci, ymax=upperci), width=.8, position=position_dodge(width=0.4), linetype="dotted", size=.4)+
+  geom_line(position=position_dodge(width=0.4)) +
+  geom_point(size = 2, position=position_dodge(width=0.4))+ 
+  facet_wrap(~N, nrow=1) +theme_bw()+theme(legend.position = "bottom")+ theme(panel.grid.major = element_blank(), panel.grid.minor=element_blank())+
+  labs(y="Mean algae cover (%)", x="Sampling week")+
+  scale_color_manual(values=colour.palette)
+
+
+Algae_CoverwarmSeason_boot
+#ggsave("AlgaeCover_WarmSeason_boot.png", width = 22, height = 10, units = "cm", dpi = 300)
+
+```
+
+
+```{r combine and save perc cover plot}
+
+AlgaeCover_BothSeason_Boot <- ggarrange(Algae_CoverCoolSeason_boot, Algae_CoverwarmSeason_boot, nrow=2, common.legend = TRUE, labels = c("A", "B"), hjust = -0.1, vjust = 1.5, legend="bottom") + 
+  theme(plot.background = element_rect(fill = "white", colour = NA))
+
+AlgaeCover_BothSeason_Boot
+ggsave("FigureS3_ComparationAlgaeCover_boot.png", width = 20, height = 20, units = "cm", dpi = 300)
+
+```
+
+
+### Algal AFDW per day (Figure S5)
+```{r cool season AFDW per day}
+
+## Cool season experiment lasted 126 days
+
+## Calculate AFDW per day for cool season
+AlgaeWeight_Cold2019$AFDW_perday <- (AlgaeWeight_Cold2019$AFDW..g...preburn..postburn. / 46)
+
+
+## Cool season GLM and bootstrap
+cool_perday_glm <- glm(AFDW_perday ~ Treatment * N, family = Gamma(link = "log"), data = AlgaeWeight_Cold2019)
+
+## Run parametric bootstrapping:
+newdata <- data.frame(Treatment = AlgaeWeight_Cold2019$Treatment, N = AlgaeWeight_Cold2019$N) # creates dataframe of predictor variables (here, Treatment and N)
+boot <- replicate(bootnum, bootFUN(model = cool_perday_glm, newdata = newdata)) # run the bootFUN the number (bootnum) of times specified and save as matrix
+
+# Calculate the mean, 95% lowerCI, and 95% upperCI from the boot matrix and add it to dataframe (but as a new name)
+AlgaeWeight_Cold2019_perday_boot <- cbind(AlgaeWeight_Cold2019, as.data.frame(t(apply(boot, 1, function(x) c(quantile(x, c(0.025, 0.5, 0.975)))))))
+colnames(AlgaeWeight_Cold2019_perday_boot)[14:16] <- c("lowerci", "mean", "upperci") # rename mean/CI columns
+
+
+
+### Plot the observational values and bootstrapped mean/CI
+cool_perday_boot_plot <- ggplot() +
+  geom_point(data = AlgaeWeight_Cold2019_perday_boot, aes(x = N , y = AFDW_perday, colour = Treatment), shape = 1, alpha = 0.4, position = position_jitterdodge(jitter.width = NULL, jitter.height = 0, dodge.width = 0.85)) +
+  geom_linerange(data = AlgaeWeight_Cold2019_perday_boot, aes(x = N, ymin = lowerci, ymax = upperci, colour = Treatment), alpha = 0.1, size = 8, position = position_dodge(width = 0.85)) +
+  geom_point(data = AlgaeWeight_Cold2019_perday_boot, aes(x = N, y = mean, colour = Treatment), shape = "-", size = 20, position = position_dodge(width = 0.85)) + # plots the mean value 
+  theme_bw() +
+  theme(panel.grid = element_blank(), panel.background=element_blank(), legend.key=element_blank(), strip.background = element_blank())+
+  scale_colour_manual(name = "", values = c("#999999", "#E69F00", "#56B4E9")) + # adds the colours for plotting
+  #scale_y_continuous(expand=c(0,0), limits = c(-3, 120)) + # makes the y-axis display as $
+  theme(axis.text.x = element_text(size = 9.5), axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5), legend.position = "bottom", legend.text = element_text(size = 8), legend.key.size = unit(0.4, "cm"), legend.key.height = unit(0.4, "cm")) + #Legend theme
+  guides(colour = guide_legend(override.aes = list(shape = 15, size=3))) +
+  ylab("AFDW per day(g)") + # y-axis label
+  xlab("") +
+  ggtitle("Cool Season") 
+
+```
+
+```{r warm season AFDW per day}
+
+#### Warm season experiment lasted 46 days
+
+## Calculate AFDW per day for warm season
+AlgaeWeight_Warm2020_fishRM$AFDW_perday <- (AlgaeWeight_Warm2020_fishRM$AFDW..g...preburn..postburn. / 46)
+
+
+## Warm season GLM and bootstrap
+warm_perday_glm <- glm(AFDW_perday ~ Treatment * N, family = Gamma(link = "log"), data = AlgaeWeight_Warm2020_fishRM)
+
+## Run parametric bootstrapping:
+newdata <- data.frame(Treatment = AlgaeWeight_Warm2020_fishRM$Treatment, N = AlgaeWeight_Warm2020_fishRM$N) # creates dataframe of predictor variables (here, Treatment and N)
+boot <- replicate(bootnum, bootFUN(model = warm_perday_glm, newdata = newdata)) # run the bootFUN the number (bootnum) of times specified and save as matrix
+
+# Calculate the mean, 95% lowerCI, and 95% upperCI from the boot matrix and add it to dataframe (but as a new name)
+AlgaeWeight_Warm2020_perday_boot <- cbind(AlgaeWeight_Warm2020_fishRM, as.data.frame(t(apply(boot, 1, function(x) c(quantile(x, c(0.025, 0.5, 0.975)))))))
+colnames(AlgaeWeight_Warm2020_perday_boot)[14:16] <- c("lowerci", "mean", "upperci") # rename mean/CI columns
+
+
+
+### Plot the observational values and bootstrapped mean/CI
+warm_perday_boot_plot <- ggplot() +
+  geom_point(data = AlgaeWeight_Warm2020_perday_boot, aes(x = N , y = AFDW_perday, colour = Treatment), shape = 1, alpha = 0.4, position = position_jitterdodge(jitter.width = NULL, jitter.height = 0, dodge.width = 0.85)) +
+  geom_linerange(data = AlgaeWeight_Warm2020_perday_boot, aes(x = N, ymin = lowerci, ymax = upperci, colour = Treatment), alpha = 0.1, size = 8, position = position_dodge(width = 0.85)) +
+  geom_point(data = AlgaeWeight_Warm2020_perday_boot, aes(x = N, y = mean, colour = Treatment), shape = "-", size = 20, position = position_dodge(width = 0.85)) + # plots the mean value 
+  theme_bw() +
+  theme(panel.grid = element_blank(), panel.background=element_blank(), legend.key=element_blank(), strip.background = element_blank())+
+  scale_colour_manual(name = "", values = c("#999999", "#56B4E9")) + # adds the colours for plotting
+  #scale_y_continuous(expand=c(0,0), limits = c(-3, 120)) + # makes the y-axis display as $
+  theme(axis.text.x = element_text(size = 9.5), axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5), legend.position = "bottom", legend.text = element_text(size = 8), legend.key.size = unit(0.4, "cm"), legend.key.height = unit(0.4, "cm")) + #Legend theme
+  guides(colour = guide_legend(override.aes = list(shape = 15, size=3))) +
+  ylab("AFDW per day (g)") + # y-axis label
+  xlab("") +
+  ggtitle("Warm Season") 
+
+```
+
+```{r combo and save afdw per day figure}
+
+AlgaeWeight_bootCI <- ggarrange(cool_perday_boot_plot, warm_perday_boot_plot, nrow = 1, labels = c("A", "B "), legend = "bottom", common.legend = TRUE) + 
+  theme(plot.background = element_rect(fill = "white", colour = NA))
+AlgaeWeight_bootCI
+
+ggsave("FigureS5_AFDWperDay.png", width = 22, height = 10, units = "cm", dpi = 300)
+
+```
+
+
+## Session Information from last knit run:
 `r format(Sys.time(), '%d %B %Y')`
 
 ```{r session info}
