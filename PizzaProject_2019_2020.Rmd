@@ -220,7 +220,7 @@ X <- AlgaeWeight_Cold2019_sum$N # item to plot on x-axis
 #df <- AlgaeWeight_Cold2019_sum # dataframe containing your summary stats
 colour <- AlgaeWeight_Cold2019_sum$Treatment # item to colour data by  
 overall.mean <- round(mean(AlgaeWeight_Cold2019$AFDW..g...preburn..postburn.), 2) # modify this to change location of dashed line
-ylab <- "Dry algae weight(gr)" # input y-axis label here (put "" if you want to leave label blank)
+ylab <- "AFDW (g)" # input y-axis label here (put "" if you want to leave label blank)
 xlab <- "" # input x-axis label here (put "" if you want to leave label blank)
 title <- "" # overall plot title (put "" if no title)
 
@@ -274,7 +274,7 @@ X <- AlgaeWeight_Warm2020_sum$N # item to plot on x-axis
 #df <- AlgaeWeight_Warm2020_sum # dataframe containing your summary stats
 colour <- AlgaeWeight_Warm2020_sum$Treatment # item to colour data by  
 overall.mean <- round(mean(AlgaeWeight_Warm2020$AFDW..g...preburn..postburn.), 2) # modify this to change location of dashed line
-ylab <- "Dry algae weight(gr)" # input y-axis label here (put "" if you want to leave label blank)
+ylab <- "AFDW (g)" # input y-axis label here (put "" if you want to leave label blank)
 xlab <- "" # input x-axis label here (put "" if you want to leave label blank)
 title <- "" # overall plot title (put "" if no title)
 
@@ -723,7 +723,7 @@ ggsave("ComparationAlgaeCover_boot.png", width = 20, height = 20, units = "cm", 
 ## Suplementary information 
 
 ### Procedural Control of warm season
-```{r warm season bootstraping}
+```{r procedural control bootstraping}
 
 # need to remove Fish exclusions here before running model
 AlgaeWeight_Warm2020_control <- AlgaeWeight_Warm2020 %>%
@@ -751,7 +751,7 @@ colnames(AlgaeWeight_Warm2020_control_boot)[13:15] <- c("lowerci", "mean", "uppe
 
 ```
 
-```{r warm season boot plot}
+```{r procedural control boot plot}
 
 colour.palette <- c("#999999", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
