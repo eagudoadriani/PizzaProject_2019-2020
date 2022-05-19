@@ -495,7 +495,7 @@ warm_boot_plot <- ggplot() +
   theme_bw() +
   theme(panel.grid = element_blank(), panel.background=element_blank(), legend.key=element_blank(), strip.background = element_blank())+
   scale_colour_manual(name = "", values = colour.palette) + # adds the colours for plotting
-  scale_y_continuous(expand=c(0,0), limits = c(-3, 120)) + # makes the y-axis display as $
+  #scale_y_continuous(expand=c(0,0), limits = c(-3, 120)) + # makes the y-axis display as $
   theme(axis.text.x = element_text(size = 9.5), axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5), legend.position = "bottom", legend.text = element_text(size = 8), legend.key.size = unit(0.4, "cm"), legend.key.height = unit(0.4, "cm")) + #Legend theme
   guides(colour = guide_legend(override.aes = list(shape = 15, size=3))) +
   ylab("AFDW (g)") + # y-axis label
@@ -537,7 +537,7 @@ cold_boot_plot <- ggplot() +
   theme_bw() +
   theme(panel.grid = element_blank(), panel.background=element_blank(), legend.key=element_blank(), strip.background = element_blank())+
   scale_colour_manual(name = "", values = colour.palette) + # adds the colours for plotting
-  scale_y_continuous(expand=c(0,0), limits = c(-3, 120)) + # makes the y-axis display as $
+  #scale_y_continuous(expand=c(0,0), limits = c(-3, 120)) + # makes the y-axis display as $
   theme(axis.text.x = element_text(size = 9.5), axis.title.y = element_text(size = 9.5, hjust = 0.6, vjust = 2.5), legend.position = "bottom", legend.text = element_text(size = 8), legend.key.size = unit(0.4, "cm"), legend.key.height = unit(0.4, "cm")) + #Legend theme
   guides(colour = guide_legend(override.aes = list(shape = 15, size=3))) +
   ylab("AFDW (g)") + # y-axis label
@@ -559,63 +559,6 @@ ggsave("Figure4_AlgaeWeight_bootCI.png", width = 22, height = 10, units = "cm", 
 
 ```
 
-
-## Tables with boot mean and CI
-```{r}
-mean_AlgaeWeight_Cold2019_boot <- AlgaeWeight_Cold2019_boot%>%
-  group_by(Treatment, N)%>%
-  summarise(mean = mean(AFDW..g...preburn..postburn.),
-            boot_estimate = mean(mean),
-            lowerCI = mean(lowerci),
-            upperCI = mean(upperci))
-
-mean_AlgaeWeight_Cold2019_boot <- as.data.frame(mean_AlgaeWeight_Cold2019_boot)
-
-mean_AlgaeWeight_Warm2020_boot_fishRM<-AlgaeWeight_Warm2020_boot_fishRM%>%
-  group_by(Treatment, N)%>%
-  summarise(mean = mean(AFDW..g...preburn..postburn.),
-            boot_estimate = mean(mean),
-            lowerCI = mean(lowerci),
-            upperCI = mean(upperci))
-
-mean_AlgaeWeight_Warm2020_boot_fishRM <- as.data.frame(mean_AlgaeWeight_Warm2020_boot_fishRM)
-
-
-summary_cold_glm <- data.frame(rownames(summary(cold_glm)$coeff), summary(cold_glm)$coeff)
-colnames(summary_cold_glm) <- c("Coefficient", "Estimate", "Std. Error", "t value", "P value")
-
-summary_warm_glm <- data.frame(rownames(summary(warm_glm)$coeff), summary(warm_glm)$coeff)
-colnames(summary_warm_glm) <- c("Coefficient", "Estimate", "Std. Error", "t value", "P value")
-
-
-### Create workbook
-wb <- createWorkbook()
-
-# add 'Table 1' worksheet
-addWorksheet(wb, "Cool AFDW Boot") 
-writeData(wb, sheet = 1, x = mean_AlgaeWeight_Cold2019_boot)
-setColWidths(wb, sheet = 1, cols = 1:6, widths = "auto")
-
-# add 'Table 2' worksheet
-addWorksheet(wb, "Warm AFDW Boot") 
-writeData(wb, sheet = 2, x = mean_AlgaeWeight_Warm2020_boot_fishRM)
-setColWidths(wb, sheet = 2, cols = 1:6, widths = "auto")
-
-# add 'Table 3' worksheet
-addWorksheet(wb, "cool glm") 
-writeData(wb, sheet = 3, x = summary_cold_glm)
-setColWidths(wb, sheet = 3, cols = 1:4, widths = "auto")
-
-# add 'Table 4' worksheet
-addWorksheet(wb, "warm glm") 
-writeData(wb, sheet = 4, x = summary_warm_glm)
-setColWidths(wb, sheet = 4, cols = 1:4, widths = "auto")
-
-
-# save workbook
-saveWorkbook(wb, file="StatTables.xlsx", overwrite = TRUE)
-
-```
 
 
 ## Suplementary information 
@@ -859,6 +802,140 @@ AlgaeWeight_bootCI
 ggsave("FigureS5_AFDWperDay.png", width = 22, height = 10, units = "cm", dpi = 300)
 
 ```
+
+
+## Tables with boot mean and CI
+
+### AFDW GLM and Bootstrap CI
+
+```{r }
+
+## Cool season AFDW bootstrap CIs
+mean_AlgaeWeight_Cold2019_boot <- AlgaeWeight_Cold2019_boot%>%
+  group_by(Treatment, N)%>%
+  summarise(mean = mean(AFDW..g...preburn..postburn.),
+            boot_estimate = mean(mean),
+            lowerCI = mean(lowerci),
+            upperCI = mean(upperci))
+
+mean_AlgaeWeight_Cold2019_boot <- as.data.frame(mean_AlgaeWeight_Cold2019_boot)
+
+
+## Warm season AFDW bootstrap CIs
+mean_AlgaeWeight_Warm2020_boot_fishRM<-AlgaeWeight_Warm2020_boot_fishRM%>%
+  group_by(Treatment, N)%>%
+  summarise(mean = mean(AFDW..g...preburn..postburn.),
+            boot_estimate = mean(mean),
+            lowerCI = mean(lowerci),
+            upperCI = mean(upperci))
+
+mean_AlgaeWeight_Warm2020_boot_fishRM <- as.data.frame(mean_AlgaeWeight_Warm2020_boot_fishRM)
+
+
+## Cool season AFDW GLM output table
+summary_cold_glm <- data.frame(rownames(summary(cold_glm)$coeff), summary(cold_glm)$coeff)
+colnames(summary_cold_glm) <- c("Coefficient", "Estimate", "Std. Error", "t value", "P value")
+
+
+## Warm season AFDW GLM output table
+summary_warm_glm <- data.frame(rownames(summary(warm_glm)$coeff), summary(warm_glm)$coeff)
+colnames(summary_warm_glm) <- c("Coefficient", "Estimate", "Std. Error", "t value", "P value")
+
+```
+
+### AFDW per day GLM and Bootstrap CI
+
+```{r }
+
+## Cool season AFDW bootstrap CIs
+mean_AlgaeWeight_Cold2019_perday_boot <- AlgaeWeight_Cold2019_perday_boot%>%
+  group_by(Treatment, N)%>%
+  summarise(mean = mean(AFDW..g...preburn..postburn.),
+            boot_estimate = mean(mean),
+            lowerCI = mean(lowerci),
+            upperCI = mean(upperci))
+
+mean_AlgaeWeight_Cold2019_perday_boot <- as.data.frame(mean_AlgaeWeight_Cold2019_perday_boot)
+
+
+## Warm season AFDW bootstrap CIs
+AlgaeWeight_Warm2020_perday_boot<-AlgaeWeight_Warm2020_perday_boot%>%
+  group_by(Treatment, N)%>%
+  summarise(mean = mean(AFDW..g...preburn..postburn.),
+            boot_estimate = mean(mean),
+            lowerCI = mean(lowerci),
+            upperCI = mean(upperci))
+
+AlgaeWeight_Warm2020_perday_boot <- as.data.frame(AlgaeWeight_Warm2020_perday_boot)
+
+
+## Cool season AFDW GLM output table
+summary_cool_perday_glm <- data.frame(rownames(summary(cool_perday_glm)$coeff), summary(cool_perday_glm)$coeff)
+colnames(summary_cool_perday_glm) <- c("Coefficient", "Estimate", "Std. Error", "t value", "P value")
+
+
+## Warm season AFDW GLM output table
+summary_warm_perday_glm <- data.frame(rownames(summary(warm_perday_glm)$coeff), summary(warm_perday_glm)$coeff)
+colnames(summary_warm_perday_glm) <- c("Coefficient", "Estimate", "Std. Error", "t value", "P value")
+
+```
+
+
+```{r save the tables into an excel spreadsheet]}
+
+### Create workbook
+wb <- createWorkbook()
+
+# add 'Table 1' worksheet
+addWorksheet(wb, "Cool AFDW Boot") 
+writeData(wb, sheet = 1, x = mean_AlgaeWeight_Cold2019_boot)
+setColWidths(wb, sheet = 1, cols = 1:6, widths = "auto")
+
+# add 'Table 2' worksheet
+addWorksheet(wb, "Warm AFDW Boot") 
+writeData(wb, sheet = 2, x = mean_AlgaeWeight_Warm2020_boot_fishRM)
+setColWidths(wb, sheet = 2, cols = 1:6, widths = "auto")
+
+
+# add 'Table 3' worksheet
+addWorksheet(wb, "cool glm") 
+writeData(wb, sheet = 3, x = summary_cold_glm)
+setColWidths(wb, sheet = 3, cols = 1:4, widths = "auto")
+
+# add 'Table 4' worksheet
+addWorksheet(wb, "warm glm") 
+writeData(wb, sheet = 4, x = summary_warm_glm)
+setColWidths(wb, sheet = 4, cols = 1:4, widths = "auto")
+
+
+# add 'Table 5' worksheet
+addWorksheet(wb, "Cool AFDW per day Boot") 
+writeData(wb, sheet = 5, x = mean_AlgaeWeight_Cold2019_perday_boot)
+setColWidths(wb, sheet = 5, cols = 1:6, widths = "auto")
+
+# add 'Table 6' worksheet
+addWorksheet(wb, "Warm AFDW per day Boot") 
+writeData(wb, sheet = 6, x = AlgaeWeight_Warm2020_perday_boot)
+setColWidths(wb, sheet = 6, cols = 1:6, widths = "auto")
+
+
+# add 'Table 7' worksheet
+addWorksheet(wb, "cool AFDW per day glm") 
+writeData(wb, sheet = 7, x = summary_cool_perday_glm)
+setColWidths(wb, sheet = 7, cols = 1:4, widths = "auto")
+
+# add 'Table 8' worksheet
+addWorksheet(wb, "warm  AFDW per day glm") 
+writeData(wb, sheet = 8, x = summary_warm_perday_glm)
+setColWidths(wb, sheet = 8, cols = 1:4, widths = "auto")
+
+
+
+# save workbook
+saveWorkbook(wb, file="StatTables.xlsx", overwrite = TRUE)
+
+```
+
 
 
 ## Session Information from last knit run:
